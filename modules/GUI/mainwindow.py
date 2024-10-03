@@ -1,14 +1,17 @@
 import sys
 import os
+import json
 import asyncio
 import csv
-from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QPushButton, QLineEdit, QTextEdit, QProgressBar, QFileDialog, QWidget
-from modules.download.pdf_downloader import download_pdf_via_api
-from modules.download.scihub_downloader import download_from_scihub
-from modules.download.pdf_searcher import search_with_advanced_selectors, search_with_general_method
+from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QTextEdit, QProgressBar, QFileDialog, QWidget, QMenu, QMenuBar
+from PyQt6.QtGui import QAction
 from modules.browser.browser_manager import BrowserManager
-from utils import base_dir
-from utils import download_path
+from modules.browser.stealth import apply_stealth
+from modules.download.pdf_downloader import download_pdf_via_api
+from modules.download.pdf_searcher import search_with_advanced_selectors, search_with_general_method
+from modules.download.scihub_downloader import download_from_scihub
+from utils import base_dir, download_path
+from modules.GUI.settingsdialog import SettingsDialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -16,6 +19,19 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Karon - Download Papers")
         self.base_dir = base_dir
+        self.config_path = os.path.join(self.base_dir, 'config.json')
+        self.load_config()
+
+        # Crear menú de configuración
+        self.menuBar = QMenuBar(self)
+        self.setMenuBar(self.menuBar)
+        settingsMenu = QMenu("Settings", self)
+        self.menuBar.addMenu(settingsMenu)
+
+        # Acción para abrir el diálogo de configuración
+        settings_action = QAction("Open Settings", self)
+        settings_action.triggered.connect(self.open_settings_dialog)
+        settingsMenu.addAction(settings_action)
 
         # Configurar widgets
         self.csvPathLine = QLineEdit(self)
@@ -27,13 +43,18 @@ class MainWindow(QMainWindow):
         self.progressBar = QProgressBar(self)
         self.progressBar.setRange(0, 100)
 
-        # Layout
+        # Crear layout horizontal para la barra CSV y el botón de Browse
+        csvLayout = QHBoxLayout()
+        csvLayout.addWidget(self.csvPathLine)
+        csvLayout.addWidget(self.browseButton)
+
+        # Crear layout vertical para organizar los widgets
         layout = QVBoxLayout()
-        layout.addWidget(self.csvPathLine)
-        layout.addWidget(self.browseButton)
+        layout.addLayout(csvLayout)  # Añadir el layout horizontal al layout principal
         layout.addWidget(self.logArea)
-        layout.addWidget(self.beginButton)
         layout.addWidget(self.progressBar)
+        layout.addWidget(self.beginButton)
+
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
@@ -41,6 +62,26 @@ class MainWindow(QMainWindow):
         # Conectar señales
         self.browseButton.clicked.connect(self.browse_csv)
         self.beginButton.clicked.connect(self.start_downloads)
+
+    def load_config(self):
+        """Cargar configuraciones desde config.json."""
+        if not os.path.exists(self.config_path):
+            self.config = {
+                "stealth_mode": False,
+                "elsevier_api": ""
+            }
+            with open(self.config_path, 'w') as f:
+                json.dump(self.config, f)
+        else:
+            with open(self.config_path, 'r') as f:
+                self.config = json.load(f)
+
+    def open_settings_dialog(self):
+        dialog = SettingsDialog(self.config_path, self)
+        dialog.exec()
+
+        # Recargar configuraciones tras cerrar el diálogo
+        self.load_config()
 
     def browse_csv(self):
         file_name, _ = QFileDialog.getOpenFileName(self, "Select CSV File", "", "CSV Files (*.csv)")
@@ -52,19 +93,19 @@ class MainWindow(QMainWindow):
         if not csv_path:
             self.logArea.append("Please provide a valid CSV path.")
             return
-        
+
         self.logArea.append("Starting downloads...")
 
-        # Delegar la lógica a los módulos de descarga
+        if self.config.get("stealth_mode", False):
+            self.logArea.append("Stealth mode activated...")
+
         asyncio.run(self.process_downloads(csv_path))
 
     async def process_downloads(self, csv_path):
         try:
-            # Crear el BrowserManager
             browser_manager = BrowserManager(executable_path=os.path.join(self.base_dir, 'Ungoogled Chromium', 'chrome.exe'), headless=True)
             await browser_manager.start_browser()
 
-            # Cargar DOIs desde el archivo CSV
             dois = self.load_dois_from_csv(csv_path)
             total_dois = len(dois)
             self.progressBar.setMaximum(total_dois)
@@ -73,34 +114,27 @@ class MainWindow(QMainWindow):
                 self.logArea.append(f"Processing DOI: {doi}")
                 page = await browser_manager.browser.new_page()
 
-                # 1. Intentar descargar con la API de Elsevier
-                pdf_content = download_pdf_via_api(doi, "api_key_here")  # Reemplaza con tu clave API
-                if pdf_content:
-                    self.save_pdf(doi, pdf_content)
-                    self.logArea.append(f"Downloaded PDF for {doi} via Elsevier API")
+                # Lógica de descarga delegada a los módulos
+                if self.config.get("elsevier_api", ""):
+                    pdf_content = download_pdf_via_api(doi, self.config["elsevier_api"])
+                    if pdf_content:
+                        self.logArea.append(f"Downloaded PDF for {doi} via Elsevier API")
                 else:
-                    self.logArea.append(f"Failed to download {doi} via API. Trying alternative methods...")
-
-                    # 2. Intentar descargar con selectores avanzados
                     success = await search_with_advanced_selectors(page, doi, download_path)
                     if success:
                         self.logArea.append(f"Downloaded PDF using advanced selectors for {doi}")
                     else:
-                        # 3. Si falla, intentar con el método general
                         success = await search_with_general_method(page, doi, download_path)
                         if success:
                             self.logArea.append(f"Downloaded PDF using general method for {doi}")
                         else:
-                            # 4. Si todo falla, intentar con Sci-Hub
                             success = await download_from_scihub(page, doi, download_path)
                             if success:
                                 self.logArea.append(f"Downloaded PDF via Sci-Hub for {doi}")
                             else:
                                 self.logArea.append(f"Failed to download {doi} from all sources")
 
-                # Actualizar progreso
                 self.progressBar.setValue(int((index + 1) / total_dois * 100))
-
                 await page.close()
 
             await browser_manager.close_browser()
@@ -113,7 +147,7 @@ class MainWindow(QMainWindow):
         try:
             with open(csv_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
-                headers = next(reader)  # Leer la primera fila (los encabezados)
+                headers = next(reader)
                 try:
                     doi_index = headers.index("DOI")
                 except ValueError:
@@ -128,12 +162,3 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logArea.append(f"Error reading CSV file: {e}")
             return []
-
-    def save_pdf(self, doi, pdf_content):
-        file_path = os.path.join(self.base_dir, 'downloads', f"{doi}.pdf")
-        try:
-            with open(file_path, 'wb') as f:
-                f.write(pdf_content)
-            self.logArea.append(f"PDF saved: {file_path}")
-        except Exception as e:
-            self.logArea.append(f"Error saving PDF: {e}")
