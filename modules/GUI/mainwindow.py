@@ -4,16 +4,16 @@ import json
 import csv
 import asyncio
 import concurrent.futures
-from PyQt6.QtCore import QEvent, QCoreApplication, pyqtSignal
-from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QTextEdit, QProgressBar, QFileDialog, QWidget, QMenu, QMenuBar
+from PyQt6.QtCore import QCoreApplication, pyqtSignal, QThread
+from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QTextEdit, QProgressBar, QFileDialog, QWidget, QMenu, QMenuBar, QMessageBox, QMenuBar, QFileDialog
 from PyQt6.QtGui import QAction
-from modules.browser.browser_manager import BrowserManager
-from modules.browser.stealth import apply_stealth
+from modules.browser.chromium import check_chromium_installed, setup_chromium
 from modules.download.pdf_downloader import download_pdf_via_api
 from modules.download.pdf_searcher import search_with_advanced_selectors, search_with_general_method
 from modules.download.scihub_downloader import download_from_scihub
 from utils import base_dir, download_path
 from modules.GUI.settingsdialog import SettingsDialog
+from modules.download.downloadworker import DownloadWorker
 
 class MainWindow(QMainWindow):
     log_signal = pyqtSignal(str)  # Usaremos esta señal para actualizar el log
@@ -67,21 +67,47 @@ class MainWindow(QMainWindow):
         self.browseButton.clicked.connect(self.browse_csv)
         self.beginButton.clicked.connect(self.start_downloads)
 
-        # Conectar la señal de log con la función para actualizar la interfaz
-        self.log_signal.connect(self.update_log)
+        # Inicializar señal para logs
+        self.worker_log_signal = pyqtSignal(str)
+
+        # Preguntar si el usuario quiere descargar Ungoogled Chromium
+        self.ask_for_chromium()
 
     def load_config(self):
         """Cargar configuraciones desde config.json."""
         if not os.path.exists(self.config_path):
             self.config = {
                 "stealth_mode": False,
-                "elsevier_api": ""
+                "elsevier_api": "",
+                "chromium_path": ""  # Asegúrate de incluir chromium_path
             }
             with open(self.config_path, 'w') as f:
                 json.dump(self.config, f)
         else:
             with open(self.config_path, 'r') as f:
                 self.config = json.load(f)
+
+        if not self.config.get("chromium_path"):
+            self.update_log("Chromium path is not set in the configuration.")
+
+    def ask_for_chromium(self):
+        chromium_path = self.config.get("chromium_path", "")
+
+        # Verificar si la ruta está vacía o si el archivo no existe
+        if not chromium_path or not os.path.exists(chromium_path):
+            response = QMessageBox.question(self, "Ungoogled Chromium",
+                                            "Ungoogled Chromium no está instalado. ¿Deseas descargarlo?",
+                                            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
+            if response == QMessageBox.StandardButton.Yes:
+                from modules.browser.chromium import setup_chromium
+                setup_chromium()
+            else:
+                self.update_log("Usando Playwright por defecto.")
+        else:
+            self.update_log("Ungoogled Chromium ya está instalado y la ruta es válida.")
+
+
 
     def open_settings_dialog(self):
         dialog = SettingsDialog(self.config_path, self)
@@ -96,102 +122,17 @@ class MainWindow(QMainWindow):
     def start_downloads(self):
         csv_path = self.csvPathLine.text()
         if not csv_path:
-            self.log_message("Please provide a valid CSV path.")
+            self.update_log("Please provide a valid CSV path.")
             return
 
-        self.log_message("Starting downloads...")
+        self.update_log("Starting downloads...")
 
-        # Ejecutar en un hilo separado y usar asyncio.run para manejar la función asincrónica
-        loop = asyncio.get_event_loop()
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            loop.run_in_executor(executor, lambda: asyncio.run(self.process_downloads(csv_path)))
-
-    def log_message(self, message):
-        """Emitir señal para actualizar el log de la GUI"""
-        self.log_signal.emit(message)
+        # Iniciar el proceso de descarga con DownloadWorker
+        self.worker = DownloadWorker(csv_path, self.config)
+        self.worker.log_signal.connect(self.update_log)  # Conectar los logs al área de texto
+        self.worker.progress_signal.connect(self.progressBar.setValue)  # Actualizar la barra de progreso
+        self.worker.start()  # Iniciar el worker en un hilo separado
 
     def update_log(self, message):
-        """Agregar un mensaje al log en la GUI"""
+        """Actualiza el área de logs en la interfaz gráfica."""
         self.logArea.append(message)
-        self.logArea.ensureCursorVisible()
-
-    async def process_downloads(self, csv_path):
-        try:
-            # Crear el BrowserManager y lanzar el navegador
-            browser_manager = BrowserManager(executable_path=os.path.join(base_dir, 'Ungoogled Chromium', 'chrome.exe'), headless=True)
-            await browser_manager.start_browser()  # Asegúrate de que el navegador se lance correctamente
-
-            if browser_manager.browser is None:
-                self.log_message("Error: The browser did not initialize correctly.")
-                return  # Detén el proceso si el navegador no se inicializó correctamente
-
-            dois = self.load_dois_from_csv(csv_path)
-            total_dois = len(dois)
-            self.progressBar.setMaximum(total_dois)
-
-            for index, doi in enumerate(dois):
-                self.log_message(f"Processing DOI: {doi}")
-
-                # Asegúrate de que browser_manager.browser no sea None
-                if browser_manager.browser:
-                    page = await browser_manager.browser.new_page()
-                else:
-                    self.log_message("Error: Browser is not initialized.")
-                    break
-
-                # Intentar descarga con API de Elsevier
-                self.log_message(f"Intentando descargar con la API de Elsevier para {doi}...")
-                pdf_content = download_pdf_via_api(doi, self.config.get('elsevier_api'))
-
-                if isinstance(pdf_content, str):
-                    self.log_message(pdf_content)
-                elif pdf_content:
-                    self.log_message(f"Downloaded PDF for {doi} via Elsevier API")
-                    continue  # Ir al siguiente DOI si la descarga fue exitosa
-
-                # Intentar con selectores avanzados
-                self.log_message(f"Intentando descargar con selectores avanzados para {doi}...")
-                success = await search_with_advanced_selectors(page, doi, download_path)
-                if not success:
-                    self.log_message(f"Intentando descargar con el método general para {doi}...")
-                    # Intentar con método general
-                    success = await search_with_general_method(page, doi, download_path)
-                
-                if not success:
-                    self.log_message(f"Intentando descargar desde Sci-Hub para {doi}...")
-                    # Intentar con Sci-Hub
-                    success = await download_from_scihub(page, doi, download_path)
-
-                if success:
-                    self.log_message(f"Downloaded PDF for {doi} via alternative methods")
-                else:
-                    self.log_message(f"Failed to download {doi} from all sources")
-
-                # Actualizar barra de progreso
-                self.progressBar.setValue(int((index + 1) / total_dois * 100))
-
-            await browser_manager.close_browser()
-
-        except Exception as e:
-            self.log_message(f"Error during download: {e}")
-
-    def load_dois_from_csv(self, csv_path):
-        dois = []
-        try:
-            with open(csv_path, newline='', encoding='utf-8') as csvfile:
-                reader = csv.reader(csvfile)
-                headers = next(reader)
-                try:
-                    doi_index = headers.index("DOI")
-                except ValueError:
-                    self.log_message("Error: 'DOI' column not found.")
-                    return []
-
-                for row in reader:
-                    dois.append(row[doi_index])
-
-            return dois
-
-        except Exception as e:
-            self.log_message(f"Error reading CSV file: {e}")
-            return []

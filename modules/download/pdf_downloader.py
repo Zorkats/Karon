@@ -2,6 +2,7 @@
 import os
 import requests
 import aiohttp
+from utils import save_pdf_directly, get_download_path
 
 def is_valid_pdf(content):
     from PyPDF2 import PdfReader
@@ -28,21 +29,24 @@ def download_pdf_via_api(doi, api_key):
             print(f"El PDF descargado desde la API de Elsevier para {doi} no es válido.")
     return None
 
-async def download_and_save_pdf_stream(pdf_url, doi, download_folder):
-    download_path = os.path.join(download_folder, f"{doi.replace('/', '_')}.pdf")
+async def download_and_save_pdf_stream(pdf_url, doi):
+    # Obtener la ruta completa de descarga directamente usando get_download_path()
+    download_path = os.path.join(get_download_path(), f"{doi.replace('/', '_')}.pdf")
+    
     try:
+        # Crear sesión para manejar la descarga del PDF
         async with aiohttp.ClientSession() as session:
             async with session.get(pdf_url) as response:
                 if response.status == 200 and 'application/pdf' in response.headers.get('Content-Type', ''):
-                    os.makedirs(os.path.dirname(download_path), exist_ok=True)
-                    with open(download_path, 'wb') as f:
-                        while True:
-                            chunk = await response.content.read(1024)
-                            if not chunk:
-                                break
-                            f.write(chunk)
+                    pdf_content = await response.read()  # Leer el contenido del PDF
+                    
+                    # Usar la función save_pdf_directly para guardar el PDF
+                    save_pdf_directly(pdf_content, download_path)
+                    
                     print(f"PDF guardado en {download_path} para el DOI {doi}")
                     return download_path
+                else:
+                    print(f"No se pudo descargar el PDF para {doi}. Código de estado: {response.status}")
     except Exception as e:
-        print(f"Error al guardar el PDF: {e}")
+        print(f"Error al guardar el PDF para {doi}: {e}")
     return None
