@@ -7,17 +7,23 @@ class BrowserManager:
         self.storage_state = storage_state
         self.browser = None
         self.context = None
-        self.page = None
         self.playwright = None
 
     async def start_browser(self):
-        if not self.playwright:  # Inicializar Playwright si aún no se ha hecho
-            self.playwright = await async_playwright().start()
-        if not self.browser:  # Solo lanzar el navegador si no está abierto
-            self.browser = await self.playwright.chromium.launch(executable_path=self.executable_path, headless=self.headless)
-            self.context = await self.browser.new_context(storage_state=self.storage_state, accept_downloads=True)
-            self.page = await self.context.new_page()
-        return self.page
+        try:
+            if not self.playwright:
+                self.playwright = await async_playwright().start()
+
+            if not self.browser:
+                self.browser = await self.playwright.chromium.launch(executable_path=self.executable_path, headless=self.headless)
+                self.context = await self.browser.new_context(storage_state=self.storage_state, accept_downloads=True)
+
+            if not self.browser:
+                raise Exception("Failed to launch the browser.")
+
+        except Exception as e:
+            print(f"Error launching browser: {e}")
+            self.browser = None  # Asegúrate de que el navegador se limpie si no se inicia
 
     async def close_browser(self):
         if self.browser:
