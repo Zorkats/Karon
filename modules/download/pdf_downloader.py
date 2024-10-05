@@ -29,24 +29,35 @@ def download_pdf_via_api(doi, api_key):
             print(f"El PDF descargado desde la API de Elsevier para {doi} no es válido.")
     return None
 
-async def download_and_save_pdf_stream(pdf_url, doi):
-    # Obtener la ruta completa de descarga directamente usando get_download_path()
-    download_path = os.path.join(get_download_path(), f"{doi.replace('/', '_')}.pdf")
-    
+# Función para descargar y guardar PDFs
+import os
+import requests
+
+def download_and_save_pdf_stream(pdf_url, doi, download_path):
     try:
-        # Crear sesión para manejar la descarga del PDF
-        async with aiohttp.ClientSession() as session:
-            async with session.get(pdf_url) as response:
-                if response.status == 200 and 'application/pdf' in response.headers.get('Content-Type', ''):
-                    pdf_content = await response.read()  # Leer el contenido del PDF
-                    
-                    # Usar la función save_pdf_directly para guardar el PDF
-                    save_pdf_directly(pdf_content, download_path)
-                    
-                    print(f"PDF guardado en {download_path} para el DOI {doi}")
-                    return download_path
-                else:
-                    print(f"No se pudo descargar el PDF para {doi}. Código de estado: {response.status}")
+        if not pdf_url.startswith('http'):
+            print(f"Advertencia: la URL {pdf_url} no comienza con 'http'. Revisar.")
+        
+        print(f"Intentando descargar PDF desde URL: {pdf_url}")
+
+        # Verificar si la carpeta de descargas existe, y crearla si no.
+        if not os.path.exists(download_path):
+            os.makedirs(download_path, exist_ok=True)
+            print(f"Carpeta creada: {download_path}")
+
+        pdf_response = requests.get(pdf_url, stream=True, timeout=30)
+        # Verificar si la URL devuelve un PDF válido (código de estado y tipo de contenido)
+        if pdf_response.status_code == 200 and 'application/pdf' in pdf_response.headers.get('Content-Type', ''):
+            file_path = os.path.join(download_path, f"{doi.replace('/', '_')}.pdf")
+            with open(file_path, 'wb') as f:
+                for chunk in pdf_response.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+            print(f"PDF guardado exitosamente en {file_path} para el DOI {doi}")
+            return True  # Retorna True si la descarga fue exitosa
+        else:
+            print(f"Error: URL no devuelve un PDF válido para el DOI {doi}. Status Code: {pdf_response.status_code}")
+            return False  # Retorna False si la descarga falla
     except Exception as e:
-        print(f"Error al guardar el PDF para {doi}: {e}")
-    return None
+        print(f"Error al descargar PDF desde URL para DOI {doi}: {e}")
+        return False  # Retorna False en caso de error

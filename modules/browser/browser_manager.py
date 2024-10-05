@@ -18,12 +18,13 @@ class BrowserManager:
                 self.browser = await self.playwright.chromium.launch(executable_path=self.executable_path, headless=self.headless)
                 self.context = await self.browser.new_context(storage_state=self.storage_state, accept_downloads=True)
 
-            if not self.browser:
-                raise Exception("Failed to launch the browser.")
-
+            if not self.browser or not self.context:
+                raise Exception("Error inicializando el navegador o el contexto.")
+            
         except Exception as e:
             print(f"Error launching browser: {e}")
-            self.browser = None  # Asegúrate de que el navegador se limpie si no se inicia
+            self.browser = None  # Asegúrate de que el navegador se limpie si no se inicia correctamente
+
 
     async def close_browser(self):
         if self.browser:
