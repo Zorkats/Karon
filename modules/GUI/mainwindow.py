@@ -81,6 +81,9 @@ class MainWindow(QMainWindow):
             self.config = {
                 "stealth_mode": False,
                 "elsevier_api": "",
+                "elsevier_insttoken": "",
+                "ieee_api": "",
+                "springer_api": "",
                 "chromium_path": "" 
             }
             with open(self.config_path, 'w') as f:

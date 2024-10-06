@@ -41,21 +41,21 @@ class SettingsDialog(QDialog):
         self.api_input.setPlaceholderText("Enter Elsevier API Key")
         self.api_input.setText(self.config.get("elsevier_api", ""))  # Mostrar la API si existe
 
+        self.insttoken_input = QLineEdit(self)
+        self.insttoken_input.setPlaceholderText("Enter Elsevier Insttoken")
+        self.insttoken_input.setText(self.config.get("elsevier_insttoken", ""))
+
         self.ieee_api_input = QLineEdit(self)
         self.ieee_api_input.setPlaceholderText("Enter IEEE API Key")
         self.ieee_api_input.setText(self.config.get("ieee_api", ""))
-
-        self.acm_api_input = QLineEdit(self)
-        self.acm_api_input.setPlaceholderText("Enter ACM API Key")
-        self.acm_api_input.setText(self.config.get("acm_api", ""))
 
         self.springer_api_input = QLineEdit(self)
         self.springer_api_input.setPlaceholderText("Enter Springer API Key")
         self.springer_api_input.setText(self.config.get("springer_api", ""))
 
         api_layout.addRow("Elsevier API:", self.api_input)
+        api_layout.addRow("Elsevier Insttoken:", self.insttoken_input)
         api_layout.addRow("IEEE API:", self.ieee_api_input)
-        api_layout.addRow("ACM API:", self.acm_api_input)
         api_layout.addRow("Springer API:", self.springer_api_input)
         api_tab.setLayout(api_layout)
 
@@ -86,7 +86,10 @@ class SettingsDialog(QDialog):
             self.config = {
                 "stealth_mode": False,
                 "elsevier_api": "",
-                "chromium_path": ""  # Añadir campo para la ruta del navegador
+                "elsevier_insttoken": "",
+                "ieee_api": "",
+                "springer_api": "",
+                "chromium_path": ""
             }
         else:
             with open(self.config_path, 'r') as f:
@@ -96,6 +99,9 @@ class SettingsDialog(QDialog):
         """Guardar las configuraciones en config.json."""
         self.config['stealth_mode'] = self.stealth_checkbox.isChecked()
         self.config['elsevier_api'] = self.api_input.text()
+        self.config['elsevier_insttoken'] = self.insttoken_input.text()
+        self.config['ieee_api'] = self.ieee_api_input.text()
+        self.config['springer_api'] = self.springer_api_input.text()
         self.config['chromium_path'] = self.browser_path_input.text()  # Guardar la ruta del navegador
 
         with open(self.config_path, 'w') as f:
