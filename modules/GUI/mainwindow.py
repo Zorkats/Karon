@@ -1,19 +1,18 @@
 import sys
 import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../')
 import json
-import csv
-import asyncio
-import concurrent.futures
-from PyQt6.QtCore import QCoreApplication, pyqtSignal, QThread
+from PyQt6.QtCore import pyqtSignal, QThread
 from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QTextEdit, QProgressBar, QFileDialog, QWidget, QMenu, QMenuBar, QMessageBox, QMenuBar, QFileDialog
 from PyQt6.QtGui import QAction
-from modules.browser.chromium import check_chromium_installed, setup_chromium
-from modules.download.pdf_downloader import download_pdf_via_api
-from modules.download.pdf_searcher import search_with_advanced_selectors, search_with_general_method
-from modules.download.scihub_downloader import download_from_scihub
-from utils import base_dir, download_path
+from modules.browser.chromium import setup_chromium
+from utils import base_dir
 from modules.GUI.settingsdialog import SettingsDialog
 from modules.download.downloadworker import DownloadWorker
+
+class ChromiumDownloadThread(QThread):
+    def run(self):
+        setup_chromium()
 
 class MainWindow(QMainWindow):
     log_signal = pyqtSignal(str)  # Usaremos esta señal para actualizar el log
@@ -21,10 +20,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Karon - Download Papers")
+        self.setWindowTitle("Karon")
         self.base_dir = base_dir
         self.config_path = os.path.join(self.base_dir, 'config.json')
-        self.load_config()
 
         # Crear menú de configuración
         self.menuBar = QMenuBar(self)
@@ -43,6 +41,7 @@ class MainWindow(QMainWindow):
         self.browseButton = QPushButton("Browse", self)
         self.beginButton = QPushButton("Begin Downloads", self)
         self.logArea = QTextEdit(self)
+        self.logArea.setPlaceholderText("Logs will be displayed here.")
         self.logArea.setReadOnly(True)
         self.progressBar = QProgressBar(self)
         self.progressBar.setRange(0, 100)
@@ -70,16 +69,19 @@ class MainWindow(QMainWindow):
         # Inicializar señal para logs
         self.worker_log_signal = pyqtSignal(str)
 
+        # Cargar configuración
+        self.load_config()
+
         # Preguntar si el usuario quiere descargar Ungoogled Chromium
         self.ask_for_chromium()
-
+        
     def load_config(self):
         """Cargar configuraciones desde config.json."""
         if not os.path.exists(self.config_path):
             self.config = {
                 "stealth_mode": False,
                 "elsevier_api": "",
-                "chromium_path": ""  # Asegúrate de incluir chromium_path
+                "chromium_path": "" 
             }
             with open(self.config_path, 'w') as f:
                 json.dump(self.config, f)
@@ -100,14 +102,18 @@ class MainWindow(QMainWindow):
                                             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
             if response == QMessageBox.StandardButton.Yes:
-                from modules.browser.chromium import setup_chromium
-                setup_chromium()
+                self.chromium_thread = ChromiumDownloadThread()
+                self.chromium_thread.start()
+                self.update_log("Downloading Ungoogled Chromium...")
+                self.update_log("Please wait for the download to complete.")
+                self.update_log("You can continue using the application in the meantime.")
+                self.update_log("Once the download is complete, the path will be automatically set.")
+                self.update_log("You can also set the path manually in the settings.")
+                self.update_log("Download Complete!")
             else:
-                self.update_log("Usando Playwright por defecto.")
+                self.update_log("Defaulting to Playwright.")
         else:
-            self.update_log("Ungoogled Chromium ya está instalado y la ruta es válida.")
-
-
+            self.update_log("Ungoogled Chromium is already installed!")
 
     def open_settings_dialog(self):
         dialog = SettingsDialog(self.config_path, self)

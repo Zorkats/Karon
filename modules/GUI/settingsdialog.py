@@ -36,10 +36,27 @@ class SettingsDialog(QDialog):
 
         # Pestaña APIs
         api_layout = QFormLayout()
+
         self.api_input = QLineEdit(self)
         self.api_input.setPlaceholderText("Enter Elsevier API Key")
         self.api_input.setText(self.config.get("elsevier_api", ""))  # Mostrar la API si existe
+
+        self.ieee_api_input = QLineEdit(self)
+        self.ieee_api_input.setPlaceholderText("Enter IEEE API Key")
+        self.ieee_api_input.setText(self.config.get("ieee_api", ""))
+
+        self.acm_api_input = QLineEdit(self)
+        self.acm_api_input.setPlaceholderText("Enter ACM API Key")
+        self.acm_api_input.setText(self.config.get("acm_api", ""))
+
+        self.springer_api_input = QLineEdit(self)
+        self.springer_api_input.setPlaceholderText("Enter Springer API Key")
+        self.springer_api_input.setText(self.config.get("springer_api", ""))
+
         api_layout.addRow("Elsevier API:", self.api_input)
+        api_layout.addRow("IEEE API:", self.ieee_api_input)
+        api_layout.addRow("ACM API:", self.acm_api_input)
+        api_layout.addRow("Springer API:", self.springer_api_input)
         api_tab.setLayout(api_layout)
 
         # Añadir pestañas
