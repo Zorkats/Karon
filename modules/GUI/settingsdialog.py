@@ -102,7 +102,7 @@ class SettingsDialog(QDialog):
         self.config['elsevier_insttoken'] = self.insttoken_input.text()
         self.config['ieee_api'] = self.ieee_api_input.text()
         self.config['springer_api'] = self.springer_api_input.text()
-        self.config['chromium_path'] = self.browser_path_input.text()  # Guardar la ruta del navegador
+        self.config['chromium_path'] = self.browser_path_input.text() 
 
         with open(self.config_path, 'w') as f:
             json.dump(self.config, f)

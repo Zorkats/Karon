@@ -29,6 +29,13 @@ class BrowserManager:
             print(f"Error launching browser: {e}")
             self.browser = None
 
+
+    async def new_page(self):
+        """Crear una nueva página."""
+        if self.context is None:
+            raise Exception("El navegador no está inicializado. Llama a start_browser primero.")
+        return await self.context.new_page()
+
     async def close_browser(self):
         if self.browser:
             await self.browser.close()

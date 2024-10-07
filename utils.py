@@ -27,17 +27,3 @@ def get_credentials():
         credentials = json.load(f)
 
     return credentials
-
-# Función para guardar PDFs directamente
-def save_pdf_directly(pdf_content, download_path):
-    try:
-        with open(download_path, 'wb') as f:
-            f.write(pdf_content)
-        print(f"PDF guardado correctamente en {download_path}")
-    except Exception as e:
-        print(f"Error guardando el PDF en {download_path}: {e}")
-
-def download_image(url, save_path):
-    response = requests.get(url)
-    with open(save_path, 'wb') as f:
-        f.write(response.content)

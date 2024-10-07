@@ -2,19 +2,18 @@
 import os
 import requests
 
+
 def is_valid_pdf(content):
     from PyPDF2 import PdfReader
     from io import BytesIO
     try:
         pdf = PdfReader(BytesIO(content))
-        return len(pdf.pages) > 0
+        return len(pdf.pages) > 1
     except Exception as e:
         print(f"Error al verificar el PDF: {e}")
         return False
 
 def download_pdf_via_api(doi, api_key, elsevier_insttoken=None):
-    headers = {}
-    url = None
     if doi.startswith('10.1016'):
         headers = {
             'X-ELS-APIKey': api_key,
@@ -24,10 +23,11 @@ def download_pdf_via_api(doi, api_key, elsevier_insttoken=None):
         url = f'https://api.elsevier.com/content/article/doi/{doi}'
     elif doi.startswith('10.1007'):
         headers = {
-            'Accept': 'application/pdf',
+            'Accept': 'application/json',
             'api_key': api_key
         }
-        url = f'https://api.springer.com/v2/articles/{doi}/fulltext?api_key={api_key}'
+        url = f'https://api.springernature.com/openaccess/json?q=doi:{doi}&api_key={api_key}'
+        return download_springer_pdf(url, headers)
     elif doi.startswith('10.1109'):
         headers = {
             'X-API-Key': api_key,
@@ -43,10 +43,39 @@ def download_pdf_via_api(doi, api_key, elsevier_insttoken=None):
             else:
                 print(f"El PDF descargado desde la API para {doi} no es válido.")
         return None
-    else:
-        print(f"DOI {doi} no está soportado por ninguna API.")
-        return None
+    
 
+def download_springer_pdf(url, headers):
+    """Descargar el enlace al PDF de Springer desde los metadatos JSON."""
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        metadata = response.json()
+        # Buscar el enlace del PDF en los metadatos
+        pdf_url = extract_springer_pdf_url(metadata)
+        
+        if pdf_url:
+            # Hacer una segunda solicitud HTTP para obtener el PDF
+            pdf_response = requests.get(pdf_url)
+            if pdf_response.status_code == 200 and 'application/pdf' in pdf_response.headers.get('Content-Type', ''):
+                return pdf_response.content
+            else:
+                print(f"Error al descargar el PDF desde el enlace: {pdf_url}")
+        else:
+            print("No se encontró un enlace al PDF en los metadatos de Springer.")
+    return None
+
+def extract_springer_pdf_url(metadata):
+    """Extraer el enlace del PDF desde los metadatos JSON de Springer."""
+    try:
+        for record in metadata['records']:
+            if 'url' in record:
+                for url in record['url']:
+                    if url.get('format') == 'pdf':  # Asegurarse de que el formato es PDF
+                        return url.get('value')
+    except KeyError:
+        print("Error al procesar los metadatos de Springer.")
+    return None
 
 async def download_and_save_pdf_stream(pdf_url, doi, download_path):
     try:

@@ -11,16 +11,17 @@ from modules.download.pdf_searcher import search_with_advanced_selectors, search
 from modules.download.scihub_downloader import download_from_scihub
 from utils import get_download_path
 
-
 class DownloadWorker(QThread):
     log_signal = pyqtSignal(str)
     progress_signal = pyqtSignal(int)
 
-    def __init__(self, csv_path, config):
+    def __init__(self, csv_path, config, max_concurrent_tasks=3):
         super().__init__()
         self.csv_path = csv_path
         self.config = config
         self.download_path = get_download_path()
+        self.max_concurrent_tasks = max_concurrent_tasks  # Número máximo de descargas simultáneas
+        self.semaphore = asyncio.Semaphore(self.max_concurrent_tasks)
 
     def run(self):
         loop = asyncio.new_event_loop()
@@ -28,7 +29,7 @@ class DownloadWorker(QThread):
         loop.run_until_complete(self.process_downloads())
 
     async def process_downloads(self):
-        """Función principal para manejar las descargas asincrónicas."""
+        """Función principal para manejar las descargas secuenciales."""
         dois = self.load_dois_from_csv(self.csv_path)
         total_dois = len(dois)
     
@@ -37,49 +38,54 @@ class DownloadWorker(QThread):
         await browser_manager.start_browser()
         self.log_signal.emit("Navegador iniciado.")
 
+        # Procesar cada DOI uno por uno secuencialmente
         for index, doi in enumerate(dois):
-            self.log_signal.emit(f"Processing DOI: {doi}")
-            api_used = False
-
-            # Intentar descargar con Elsevier
-            if doi.startswith("10.1016"):
-                self.log_signal.emit(f"Intentando descargar con la API de Elsevier para {doi}...")
-                api_key = self.config.get("elsevier_api", None)
-                elsevier_insttoken = self.config.get("elsevier_insttoken", None)
-                if api_key:
-                    pdf_content = download_pdf_via_api(doi, api_key, elsevier_insttoken)
-                    if pdf_content:
-                        self.save_pdf(doi, pdf_content, index, total_dois)
-                        api_used = True
-
-            # Intentar descargar con Springer
-            elif doi.startswith("10.1007"):
-                self.log_signal.emit(f"Intentando descargar con la API de Springer para {doi}...")
-                api_key = self.config.get("springer_api", None)
-                if api_key:
-                    pdf_content = download_pdf_via_api(doi, api_key)
-                    if pdf_content:
-                        self.save_pdf(doi, pdf_content, index, total_dois)
-                        api_used = True
-
-            # Intentar descargar con IEEE
-            elif doi.startswith("10.1109"):
-                self.log_signal.emit(f"Intentando descargar con la API de IEEE para {doi}...")
-                api_key = self.config.get("ieee_api", None)
-                if api_key:
-                    pdf_content = download_pdf_via_api(doi, api_key)
-                    if pdf_content:
-                        self.save_pdf(doi, pdf_content, index, total_dois)
-                        api_used = True
-
-            if not api_used:
-                self.log_signal.emit(f"No se encontró API válida para {doi}, intentando con navegación web...")
-                page = await browser_manager.context.new_page()
-                await self.handle_page_navigation(page, doi, index, total_dois)
+            await self.download_single_doi(doi, index, total_dois, browser_manager)
 
         await browser_manager.close_browser()
 
-    async def handle_page_navigation(self, page, doi, index, total_dois):
+    async def download_single_doi(self, doi, index, total_dois, browser_manager):
+        self.log_signal.emit(f"Processing DOI: {doi}")
+        pdf_content = None
+
+        # Intentar descargar con Elsevier
+        if doi.startswith("10.1016"):
+            self.log_signal.emit(f"Intentando descargar con la API de Elsevier para {doi}...")
+            api_key = self.config.get("elsevier_api", None)
+            elsevier_insttoken = self.config.get("elsevier_insttoken", None)
+            if api_key:
+                pdf_content = download_pdf_via_api(doi, api_key, elsevier_insttoken)
+                if pdf_content:
+                    self.save_pdf(doi, pdf_content, index, total_dois)
+                    return  # Si el PDF es válido, terminar la tarea
+
+        # Intentar descargar con Springer
+        elif doi.startswith("10.1007"):
+            self.log_signal.emit(f"Intentando descargar con la API de Springer para {doi}...")
+            api_key = self.config.get("springer_api", None)
+            if api_key:
+                pdf_content = download_pdf_via_api(doi, api_key)
+                if pdf_content:
+                    self.save_pdf(doi, pdf_content, index, total_dois)
+                    return  # Si el PDF es válido, terminar la tarea
+
+        # Intentar descargar con IEEE
+        elif doi.startswith("10.1109"):
+            self.log_signal.emit(f"Intentando descargar con la API de IEEE para {doi}...")
+            api_key = self.config.get("ieee_api", None)
+            if api_key:
+                pdf_content = download_pdf_via_api(doi, api_key)
+                if pdf_content:
+                    self.save_pdf(doi, pdf_content, index, total_dois)
+                    return  # Si el PDF es válido, terminar la tarea
+
+        # Si no se usó ninguna API, intentar con navegación web
+        apply_stealth_mode = self.config.get("stealth_mode", False)
+        page = await browser_manager.new_page()
+        if apply_stealth_mode:
+            await apply_stealth(page)
+
+        # Navegar a la página del DOI
         url = f"https://doi.org/{doi}"
         self.log_signal.emit(f"Navegando a la página del DOI {doi}...")
         try:
@@ -87,6 +93,7 @@ class DownloadWorker(QThread):
             self.log_signal.emit(f"Navegación a la página del DOI {doi} completada.")
         except Exception as e:
             self.log_signal.emit(f"Error navegando a la página del DOI {doi}: {e}")
+            await page.close()
             return
 
         # Intentar con selectores avanzados
@@ -97,11 +104,8 @@ class DownloadWorker(QThread):
                 download_complete = await download_and_save_pdf_stream(pdf_url, doi, self.download_path)
                 if download_complete:
                     self.log_signal.emit(f"Downloaded PDF for {doi} via advanced selectors")
-                    self.progress_signal.emit(int((index + 1) / total_dois * 100))
                     await page.close()
                     return
-            else:
-                self.log_signal.emit(f"No se encontró PDF con selectores avanzados para {doi}")
         except Exception as e:
             self.log_signal.emit(f"Error in advanced selectors for {doi}: {e}")
 
@@ -113,15 +117,10 @@ class DownloadWorker(QThread):
                 download_complete = await download_and_save_pdf_stream(pdf_url, doi, self.download_path)
                 if download_complete:
                     self.log_signal.emit(f"Downloaded PDF for {doi} via general method")
-                    self.progress_signal.emit(int((index + 1) / total_dois * 100))
                     await page.close()
                     return
-            else:
-                self.log_signal.emit(f"No se encontró PDF con el método general para {doi}")
         except Exception as e:
             self.log_signal.emit(f"Error in general method for {doi}: {e}")
-
-
 
         # Si fallan los métodos avanzados y general, intentar con Sci-Hub
         try:
@@ -131,10 +130,11 @@ class DownloadWorker(QThread):
                 self.log_signal.emit(f"Downloaded PDF for {doi} via Sci-Hub")
             else:
                 self.log_signal.emit(f"Failed to download {doi} from all sources")
-            self.progress_signal.emit(int((index + 1) / total_dois * 100))
-            await page.close()
         except Exception as e:
             self.log_signal.emit(f"Error downloading from Sci-Hub for {doi}: {e}")
+
+        await page.close()
+
 
     def save_pdf(self, doi, pdf_content, index, total_dois):
         """Guardar el PDF descargado."""
