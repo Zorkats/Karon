@@ -8,8 +8,9 @@ import os
 import platform
 import json
 from bs4 import BeautifulSoup
-from utils import base_dir  # Asegúrate de importar base_dir desde utils
+from modules.utils import get_base_dir  # Asegúrate de importar base_dir desde utils
 
+base_dir = get_base_dir()
 CHROMIUM_FOLDER = os.path.join(base_dir, "Ungoogled Chromium")
 
 # Definir URLs fijas para cada sistema operativo

@@ -1,12 +1,10 @@
-import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../')
 import json
-from PyQt6.QtCore import pyqtSignal, QThread
-from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QTextEdit, QProgressBar, QFileDialog, QWidget, QMenu, QMenuBar, QMessageBox, QMenuBar, QFileDialog
-from PyQt6.QtGui import QAction
+from PySide6.QtCore import Signal, QThread
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QTextEdit, QProgressBar, QFileDialog, QWidget, QMenu, QMenuBar, QMessageBox, QMenuBar, QFileDialog
+from PySide6.QtGui import QAction
 from modules.browser.chromium import setup_chromium
-from utils import base_dir
+from modules.utils import get_base_dir
 from modules.GUI.settingsdialog import SettingsDialog
 from modules.download.downloadworker import DownloadWorker
 
@@ -15,13 +13,13 @@ class ChromiumDownloadThread(QThread):
         setup_chromium()
 
 class MainWindow(QMainWindow):
-    log_signal = pyqtSignal(str)  # Usaremos esta señal para actualizar el log
+    log_signal = Signal(str)  # Usaremos esta señal para actualizar el log
 
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Karon")
-        self.base_dir = base_dir
+        self.base_dir = get_base_dir()
         self.config_path = os.path.join(self.base_dir, 'config.json')
 
         # Crear menú de configuración
@@ -67,7 +65,7 @@ class MainWindow(QMainWindow):
         self.beginButton.clicked.connect(self.start_downloads)
 
         # Inicializar señal para logs
-        self.worker_log_signal = pyqtSignal(str)
+        self.worker_log_signal = Signal(str)
 
         # Cargar configuración
         self.load_config()
@@ -108,11 +106,6 @@ class MainWindow(QMainWindow):
                 self.chromium_thread = ChromiumDownloadThread()
                 self.chromium_thread.start()
                 self.update_log("Downloading Ungoogled Chromium...")
-                self.update_log("Please wait for the download to complete.")
-                self.update_log("You can continue using the application in the meantime.")
-                self.update_log("Once the download is complete, the path will be automatically set.")
-                self.update_log("You can also set the path manually in the settings.")
-                self.update_log("Download Complete!")
             else:
                 self.update_log("Defaulting to Playwright.")
         else:

@@ -1,18 +1,22 @@
-# captcha_solver/utils.py
-import requests
 import os
-
-# Definir base_dir
-base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-download_path = os.path.join(base_dir, 'downloads')
+import sys
 
 def get_base_dir():
-    """Obtiene el directorio raíz absoluto del proyecto."""
-    return base_dir
+    if getattr(sys, 'frozen', False):
+    # Si el programa está congelado (por ejemplo, al ejecutar el .exe generado)
+        return os.path.dirname(sys.argv[0])
+    else:
+        # Si el programa está en modo script (por ejemplo, en desarrollo)
+        return os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+base_dir = get_base_dir()
+download_path = os.path.join(base_dir, 'downloads')
+config_path = os.path.join(base_dir, 'config.json')
 
 def get_download_path():
     """Obtiene el directorio de descargas."""
     return download_path
+
 
 
 # Función para obtener las credenciales del usuario

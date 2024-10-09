@@ -1,4 +1,3 @@
-# captcha_solver/captcha_detection.py
 async def detect_access_issues(page):
     try:
         captcha_iframe = await page.query_selector('iframe[src*="recaptcha"], iframe[src*="hcaptcha"]')

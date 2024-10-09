@@ -1,27 +1,23 @@
-import sys
 import asyncio
 import csv
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../')
-from PyQt6.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 from modules.browser.browser_manager import BrowserManager
 from modules.browser.stealth import apply_stealth
 from modules.download.pdf_downloader import download_pdf_via_api, download_and_save_pdf_stream
 from modules.download.pdf_searcher import search_with_advanced_selectors, search_with_general_method
 from modules.download.scihub_downloader import download_from_scihub
-from utils import get_download_path
+from modules.utils import get_base_dir, get_download_path
 
 class DownloadWorker(QThread):
-    log_signal = pyqtSignal(str)
-    progress_signal = pyqtSignal(int)
+    log_signal = Signal(str)
+    progress_signal = Signal(int)
 
-    def __init__(self, csv_path, config, max_concurrent_tasks=3):
+    def __init__(self, csv_path, config):
         super().__init__()
         self.csv_path = csv_path
         self.config = config
         self.download_path = get_download_path()
-        self.max_concurrent_tasks = max_concurrent_tasks  # Número máximo de descargas simultáneas
-        self.semaphore = asyncio.Semaphore(self.max_concurrent_tasks)
 
     def run(self):
         loop = asyncio.new_event_loop()

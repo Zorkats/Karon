@@ -1,11 +1,13 @@
 import os
 import json
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLineEdit, QTabWidget, QWidget, QFormLayout, QCheckBox, QFileDialog
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLineEdit, QTabWidget, QWidget, QFormLayout, QCheckBox, QFileDialog
+from modules.utils import get_base_dir
 
 class SettingsDialog(QDialog):
     def __init__(self, config_path, parent=None):
         super().__init__(parent)
-        self.config_path = config_path
+        self.base_dir = get_base_dir()
+        self.config_path = os.path.join(self.base_dir, 'config.json')
         self.setWindowTitle("Settings")
         self.setMinimumSize(400, 300)
 

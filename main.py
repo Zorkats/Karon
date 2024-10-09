@@ -1,5 +1,6 @@
+import os
 import sys
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from modules.GUI.mainwindow import MainWindow
 
 # Función principal para ejecutar la aplicación

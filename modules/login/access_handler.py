@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 import pandas as pd
 import asyncio
 from playwright.async_api import async_playwright
-from utils import base_dir
+from modules.utils import base_dir
 
 # Ruta para guardar el estado de autenticación
 auth_state_path = os.path.join(base_dir, 'auth_state.json')

@@ -1,8 +1,4 @@
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../')
-from modules.download.pdf_downloader import download_and_save_pdf_stream
-from utils import get_download_path
+from modules.utils import get_download_path
 
 download_folder = get_download_path()
 
