@@ -28,6 +28,7 @@ class DownloadWorker(QThread):
         """Función principal para manejar las descargas secuenciales."""
         dois = self.load_dois_from_csv(self.csv_path)
         total_dois = len(dois)
+        self.log_signal.emit(f"{total_dois} DOIs found for download.")
     
         self.log_signal.emit("Iniciando navegador...")
         browser_manager = BrowserManager(executable_path=os.path.join(self.config.get('chromium_path')), headless=True)
@@ -36,9 +37,13 @@ class DownloadWorker(QThread):
 
         # Procesar cada DOI uno por uno secuencialmente
         for index, doi in enumerate(dois):
+            progress = int((index + 1) / total_dois * 100)
+            self.progress_signal.emit(progress)
             await self.download_single_doi(doi, index, total_dois, browser_manager)
-
+            
         await browser_manager.close_browser()
+        self.log_signal.emit("Descargas completadas.")
+        self.progress_signal.emit(100)
 
     async def download_single_doi(self, doi, index, total_dois, browser_manager):
         self.log_signal.emit(f"Processing DOI: {doi}")

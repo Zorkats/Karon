@@ -4,6 +4,8 @@ from modules.download.pdf_downloader import download_and_save_pdf_stream
 
 SCI_HUB_URLS = [
     "https://sci-hub.se/",
+    "https://sci-hub.st/",
+    "https://sci-hub.ru/",
 ]
 
 # Función para descargar PDF desde Sci-Hub

@@ -1,5 +1,3 @@
-
-
 # Importar desde la carpeta browser
 from modules.browser import BrowserManager, detect_access_issues, apply_stealth
 

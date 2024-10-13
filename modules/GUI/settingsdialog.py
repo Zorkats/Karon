@@ -76,14 +76,31 @@ class SettingsDialog(QDialog):
 
         self.setLayout(main_layout)
 
+    # Añadir un campo para la carpeta de resultados en SettingsDialog
+        self.results_dir_input = QLineEdit(self)
+        self.results_dir_input.setPlaceholderText("Select directory to save Query Optimizer results")
+        self.results_dir_input.setText(self.config.get("results_dir", ""))
+        browse_results_button = QPushButton("Browse")
+        browse_results_button.clicked.connect(self.browse_results_dir)
+
+        general_layout.addRow("Results Directory:", self.results_dir_input)
+        general_layout.addRow(browse_results_button)
+
+
     def browse_browser(self):
         """Abrir un diálogo para que el usuario seleccione el navegador."""
         browser_path, _ = QFileDialog.getOpenFileName(self, "Select Chromium Executable", "", "Executables (*.exe)")
         if browser_path:
             self.browser_path_input.setText(browser_path)
 
+    def browse_results_dir(self):
+        """Abrir un diálogo para seleccionar el directorio donde guardar los resultados del Query Optimizer."""
+        directory = QFileDialog.getExistingDirectory(self, "Select Directory")
+        if directory:
+            self.results_dir_input.setText(directory)
+
     def load_config(self):
-        """Cargar configuraciones desde config.json o crear con valores por defecto."""
+        """Cargar configuraciones desde config.json."""
         if not os.path.exists(self.config_path):
             self.config = {
                 "stealth_mode": False,
@@ -91,8 +108,11 @@ class SettingsDialog(QDialog):
                 "elsevier_insttoken": "",
                 "ieee_api": "",
                 "springer_api": "",
-                "chromium_path": ""
+                "chromium_path": "",
+                "results_dir": ""  # Añadir el directorio de resultados
             }
+            with open(self.config_path, 'w') as f:
+                json.dump(self.config, f)
         else:
             with open(self.config_path, 'r') as f:
                 self.config = json.load(f)
@@ -104,7 +124,8 @@ class SettingsDialog(QDialog):
         self.config['elsevier_insttoken'] = self.insttoken_input.text()
         self.config['ieee_api'] = self.ieee_api_input.text()
         self.config['springer_api'] = self.springer_api_input.text()
-        self.config['chromium_path'] = self.browser_path_input.text() 
+        self.config['chromium_path'] = self.browser_path_input.text()
+        self.config['results_dir'] = self.results_dir_input.text()  # Guardar el directorio de resultados
 
         with open(self.config_path, 'w') as f:
             json.dump(self.config, f)

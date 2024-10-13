@@ -1,11 +1,11 @@
 # Karon/pdf_downloader.py
 import os
 import requests
+from PyPDF2 import PdfReader
+from io import BytesIO
 
 
 def is_valid_pdf(content):
-    from PyPDF2 import PdfReader
-    from io import BytesIO
     try:
         pdf = PdfReader(BytesIO(content))
         return len(pdf.pages) > 1
