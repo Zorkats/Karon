@@ -59,33 +59,6 @@ def plot_wordcloud(df):
     image_data.seek(0)
     return image_data
 
-def generate_report(df, filename='report.html'):
-    with open(filename, 'w') as f:
-        f.write("<html><head><title>Query Analysis Report</title></head><body>")
-        f.write("<h1>Query Analysis Report</h1>")
-        f.write(f"<p>Total Articles: {len(df)}</p>")
-
-        # Publicaciones por año
-        if 'Year' in df.columns:
-            year_count = df['Year'].value_counts().sort_index()
-            f.write("<h2>Publications per Year</h2>")
-            f.write(year_count.to_frame().to_html())
-
-        # Artículos por autor
-        if 'Authors' in df.columns:
-            author_count = df['Authors'].value_counts().head(10)
-            f.write("<h2>Top 10 Authors</h2>")
-            f.write(author_count.to_frame().to_html())
-
-        # Revistas más comunes
-        if 'Journal' in df.columns:
-            journal_count = df['Journal'].value_counts().head(10)
-            f.write("<h2>Top 10 Journals</h2>")
-            f.write(journal_count.to_frame().to_html())
-
-        f.write("</body></html>")
-    print(f"Report generated and saved as {filename}")
-
 def save_data(df, filename):
     df.to_csv(filename, index=False)
     print(f"Data saved to {filename}")

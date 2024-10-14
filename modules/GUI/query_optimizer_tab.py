@@ -59,7 +59,6 @@ class QueryOptimizerTab(QWidget):
 
         # Guardar y generar resultados
         save_data(df_filtered, "filtered_results.csv")
-        generate_report(df_filtered, "query_report.html")
 
         self.update_log("Query Optimizer completed.")
 
