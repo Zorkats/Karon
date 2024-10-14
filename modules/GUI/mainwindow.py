@@ -69,6 +69,7 @@ class MainWindow(QMainWindow):
         if not os.path.exists(self.config_path):
             self.config = {
                 "stealth_mode": False,
+                "enable_scihub": True,
                 "elsevier_api": "",
                 "elsevier_insttoken": "",
                 "ieee_api": "",
@@ -83,7 +84,7 @@ class MainWindow(QMainWindow):
             with open(self.config_path, 'r') as f:
                 self.config = json.load(f)
 
-        load_theme(self.config.get("theme", ""))
+        self.setStyleSheet(load_theme(self.config.get("theme", "")))
         
         if not self.config.get("chromium_path"):
             print("Chromium path is not set in the configuration.")

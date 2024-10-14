@@ -124,15 +124,18 @@ class DownloadWorker(QThread):
             self.log_signal.emit(f"Error in general method for {doi}: {e}")
 
         # Si fallan los métodos avanzados y general, intentar con Sci-Hub
-        try:
-            self.log_signal.emit(f"Intentando descargar desde Sci-Hub para {doi}...")
-            success = await download_from_scihub(page, doi, self.download_path)
-            if success:
-                self.log_signal.emit(f"Downloaded PDF for {doi} via Sci-Hub")
-            else:
-                self.log_signal.emit(f"Failed to download {doi} from all sources")
-        except Exception as e:
-            self.log_signal.emit(f"Error downloading from Sci-Hub for {doi}: {e}")
+        if self.config.get('enable_scihub', True):
+            try:
+                self.log_signal.emit(f"Intentando descargar desde Sci-Hub para {doi}...")
+                success = await download_from_scihub(page, doi, self.download_path)
+                if success:
+                    self.log_signal.emit(f"Downloaded PDF for {doi} via Sci-Hub")
+                else:
+                    self.log_signal.emit(f"Failed to download {doi} from all sources")
+            except Exception as e:
+                self.log_signal.emit(f"Error downloading from Sci-Hub for {doi}: {e}")
+        else:
+            self.log_signal.emit(f"SciHub downloads are disabled.")
 
         await page.close()
 

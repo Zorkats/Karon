@@ -11,6 +11,7 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("Settings")
         self.setMinimumSize(400, 300)
 
+        self.config = {}
         self.load_config()
 
         # Crear un TabWidget para las dos pestañas
@@ -23,6 +24,10 @@ class SettingsDialog(QDialog):
         self.stealth_checkbox = QCheckBox("Activate Stealth Mode", self)
         self.stealth_checkbox.setChecked(self.config.get("stealth_mode", False))
         general_layout.addRow(self.stealth_checkbox)
+
+        self.scihub_checkbox = QCheckBox("Enable SciHub Downloads", self)
+        self.scihub_checkbox.setChecked(self.config.get("enable_scihub", True))
+        general_layout.addRow(self.scihub_checkbox)
 
         # Añadir el campo para el "Chromium Path" con un botón "Browse"
         self.browser_path_input = QLineEdit(self)
@@ -80,6 +85,9 @@ class SettingsDialog(QDialog):
         main_layout.addWidget(save_button)
 
         self.setLayout(main_layout)
+        self.apply_loaded_config() 
+        
+        
 
     # Añadir un campo para la carpeta de resultados en SettingsDialog
         self.results_dir_input = QLineEdit(self)
@@ -109,6 +117,7 @@ class SettingsDialog(QDialog):
         if not os.path.exists(self.config_path):
             self.config = {
                 "stealth_mode": False,
+                "enable_scihub": True,
                 "elsevier_api": "",
                 "elsevier_insttoken": "",
                 "ieee_api": "",
@@ -123,13 +132,19 @@ class SettingsDialog(QDialog):
             with open(self.config_path, 'r') as f:
                 self.config = json.load(f)
 
-        load_theme(self.config.get("theme", ""))
-    
+        self.setStyleSheet(load_theme(self.config.get("theme", "")))
 
+    
+    def apply_loaded_config(self):
+        """Aplicar las configuraciones cargadas a los widgets."""
+        self.stealth_checkbox.setChecked(self.config.get("stealth_mode", False))
+        self.scihub_checkbox.setChecked(self.config.get("enable_scihub", True))
+        self.browser_path_input.setText(self.config.get("chromium_path", ""))
 
     def save_config(self):
         """Guardar las configuraciones en config.json."""
         self.config['stealth_mode'] = self.stealth_checkbox.isChecked()
+        self.config['enable_scihub'] = self.scihub_checkbox.isChecked()
         self.config['elsevier_api'] = self.api_input.text()
         self.config['elsevier_insttoken'] = self.insttoken_input.text()
         self.config['ieee_api'] = self.ieee_api_input.text()
