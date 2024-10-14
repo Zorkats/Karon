@@ -1,10 +1,10 @@
 import os
 import json
 from PySide6.QtCore import Signal, QThread
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QTabWidget, QWidget, QMenu, QMenuBar, QMessageBox
-from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QTabWidget, QWidget, QMenu, QMenuBar, QMessageBox, QLabel
+from PySide6.QtGui import QAction, QPixmap, QIcon
 from modules.browser.chromium import setup_chromium
-from modules.utils import get_base_dir
+from modules.utils import get_base_dir, load_theme
 from modules.GUI.settingsdialog import SettingsDialog
 from modules.GUI.download_tab import DownloadTab
 from modules.GUI.query_optimizer_tab import QueryOptimizerTab
@@ -70,8 +70,12 @@ class MainWindow(QMainWindow):
             self.config = {
                 "stealth_mode": False,
                 "elsevier_api": "",
+                "elsevier_insttoken": "",
+                "ieee_api": "",
+                "springer_api": "",
                 "chromium_path": "",
-                "results_dir": ""
+                "results_dir": "",
+                "theme": "Default"
             }
             with open(self.config_path, 'w') as f:
                 json.dump(self.config, f)
@@ -79,6 +83,8 @@ class MainWindow(QMainWindow):
             with open(self.config_path, 'r') as f:
                 self.config = json.load(f)
 
+        load_theme(self.config.get("theme", ""))
+        
         if not self.config.get("chromium_path"):
             print("Chromium path is not set in the configuration.")
 

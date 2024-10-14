@@ -1,7 +1,7 @@
 import os
 import json
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLineEdit, QTabWidget, QWidget, QFormLayout, QCheckBox, QFileDialog
-from modules.utils import get_base_dir
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLineEdit, QTabWidget, QWidget, QFormLayout, QCheckBox, QFileDialog, QComboBox
+from modules.utils import get_base_dir, load_theme, get_available_themes
 
 class SettingsDialog(QDialog):
     def __init__(self, config_path, parent=None):
@@ -35,6 +35,11 @@ class SettingsDialog(QDialog):
         general_layout.addRow("Chromium Path:", self.browser_path_input)
         general_layout.addRow(browse_button)
         general_tab.setLayout(general_layout)
+
+        self.theme_selector = QComboBox(self)
+        self.theme_selector.addItems(get_available_themes())
+        self.theme_selector.setCurrentText(self.config.get("theme", "default"))
+        general_layout.addRow("Theme:", self.theme_selector)
 
         # Pestaña APIs
         api_layout = QFormLayout()
@@ -109,13 +114,18 @@ class SettingsDialog(QDialog):
                 "ieee_api": "",
                 "springer_api": "",
                 "chromium_path": "",
-                "results_dir": ""  # Añadir el directorio de resultados
+                "results_dir": "",
+                "theme": "Default"
             }
             with open(self.config_path, 'w') as f:
                 json.dump(self.config, f)
         else:
             with open(self.config_path, 'r') as f:
                 self.config = json.load(f)
+
+        load_theme(self.config.get("theme", ""))
+    
+
 
     def save_config(self):
         """Guardar las configuraciones en config.json."""
@@ -125,9 +135,12 @@ class SettingsDialog(QDialog):
         self.config['ieee_api'] = self.ieee_api_input.text()
         self.config['springer_api'] = self.springer_api_input.text()
         self.config['chromium_path'] = self.browser_path_input.text()
-        self.config['results_dir'] = self.results_dir_input.text()  # Guardar el directorio de resultados
+        self.config['results_dir'] = self.results_dir_input.text()
+        self.config['theme'] = self.theme_selector.currentText()
 
         with open(self.config_path, 'w') as f:
             json.dump(self.config, f)
+
+        load_theme(self.theme_selector.currentText())
 
         self.accept()  # Cerrar el diálogo al guardar

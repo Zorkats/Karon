@@ -14,6 +14,7 @@ main.build
 main.dist
 main.onefile-build
 karon_logo.png
+karon.ico
 
 
 # Byte-compiled / optimized / DLL files
