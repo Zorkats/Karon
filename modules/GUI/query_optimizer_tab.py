@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QFileDialog
-from modules.download.query_optimizer import combine_queries, clean_data, filter_by_keyword, save_data, generate_report
+from modules.download.query_optimizer import combine_queries, clean_data, filter_by_keyword, save_data
 
 class QueryOptimizerTab(QWidget):
     def __init__(self):
