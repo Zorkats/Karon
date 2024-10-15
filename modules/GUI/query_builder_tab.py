@@ -9,6 +9,8 @@ class QueryBuilderTab(QWidget):
         self.config = config
 
         # Widgets for creating queries
+        self.custom_query_input = QTextEdit(self)
+        self.custom_query_input.setPlaceholderText("Enter your pre-built query here (optional)")
         self.keyword_input = QLineEdit(self)
         self.keyword_input.setPlaceholderText("Enter keywords (comma separated)")
         self.title_input = QLineEdit(self)
@@ -34,6 +36,7 @@ class QueryBuilderTab(QWidget):
         self.download_button.setEnabled(False)
 
         layout = QVBoxLayout()
+        layout.addWidget(self.custom_query_input)
         layout.addWidget(self.keyword_input)
         layout.addWidget(self.title_input)
         layout.addWidget(self.author_input)
@@ -52,7 +55,11 @@ class QueryBuilderTab(QWidget):
         self.setLayout(layout)
 
         self.generate_query_button.clicked.connect(self.generate_query)
+        self.custom_query_input.textChanged.connect(self.toggle_download_button)
         self.download_button.clicked.connect(self.download_data)
+        
+
+        
 
     def generate_query(self):
         keywords = [kw.strip() for kw in self.keyword_input.text().split(',') if kw.strip()]
@@ -84,7 +91,12 @@ class QueryBuilderTab(QWidget):
 
 
     def download_data(self):
-        query = self.query_output.toPlainText()
+        # Si el campo de query personalizada está vacío, genera una query nueva
+        if self.custom_query_input.toPlainText().strip():
+            query = self.custom_query_input.toPlainText().strip()
+        else:
+            query = self.generate_query()
+        
         api_type = self.api_selection.currentText()
         scopus_api_key = self.config.get('elsevier_api')
         insttoken = self.config.get('elsevier_insttoken') if api_type == "Scopus" else None
@@ -109,6 +121,11 @@ class QueryBuilderTab(QWidget):
             self.query_output.append("No results found or there was an error during the download.")
 
 
+    def toggle_download_button(self):
+            if self.custom_query_input.toPlainText().strip():
+                self.download_button.setEnabled(True)
+            else:
+                self.download_button.setEnabled(False)
 
     def update_progress(self, progress):
         self.progress_bar.setValue(progress)

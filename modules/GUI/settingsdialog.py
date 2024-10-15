@@ -1,9 +1,11 @@
 import os
 import json
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLineEdit, QTabWidget, QWidget, QFormLayout, QCheckBox, QFileDialog, QComboBox
 from modules.utils import get_base_dir, load_theme, get_available_themes
 
 class SettingsDialog(QDialog):
+    settings_changed = Signal()
     def __init__(self, config_path, parent=None):
         super().__init__(parent)
         self.base_dir = get_base_dir()
@@ -165,4 +167,5 @@ class SettingsDialog(QDialog):
 
         load_theme(self.theme_selector.currentText())
 
+        self.settings_changed.emit()
         self.accept()  # Cerrar el diálogo al guardar

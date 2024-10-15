@@ -1,9 +1,14 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QTextEdit, QProgressBar, QFileDialog
 from modules.download.downloadworker import DownloadWorker
+import os
+from modules.utils import get_base_dir
 
 class DownloadTab(QWidget):
     def __init__(self):
         super().__init__()
+        self.base_dir = get_base_dir()
+        self.config_path = os.path.join(self.base_dir, 'config.json')
+        self.config = {}
 
         # Configurar widgets para Download Papers
         self.csvPathLine = QLineEdit(self)

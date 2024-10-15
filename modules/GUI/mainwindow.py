@@ -1,7 +1,7 @@
 import os
 import json
 from PySide6.QtCore import Signal, QThread
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QTabWidget, QWidget, QMenu, QMenuBar, QMessageBox, QLabel
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QTabWidget, QWidget, QMenu, QMenuBar, QMessageBox, QCheckBox
 from PySide6.QtGui import QAction, QPixmap, QIcon
 from modules.browser.chromium import setup_chromium
 from modules.utils import get_base_dir, load_theme
@@ -28,10 +28,22 @@ class MainWindow(QMainWindow):
         self.base_dir = get_base_dir()
         self.config_path = os.path.join(self.base_dir, 'config.json')
         self.config = {}
+        self.api_input = None  # Inicializar como None en lugar de string vacío
+        self.insttoken_input = None
+        self.wos_api_input = None
+        self.ieee_api_input = None
+        self.springer_api_input = None
+        self.browser_path_input = None
+        self.results_dir_input = None
+        self.stealth_checkbox = QCheckBox("Stealth Mode")
+        self.scihub_checkbox = QCheckBox("Enable SciHub Downloads")
+        
         self.load_config()
 
         # Crear menú de configuración
         self.create_menu()
+        self.settings_dialog = SettingsDialog(self.config_path, self)
+        self.settings_dialog.settings_changed.connect(self.apply_settings_immediately)
 
         # Crear QTabWidget para las pestañas
         self.tabs = QTabWidget()
@@ -86,8 +98,7 @@ class MainWindow(QMainWindow):
             with open(self.config_path, 'r') as f:
                 self.config = json.load(f)
 
-        self.setStyleSheet(load_theme(self.config.get("theme", "")))
-        
+        self.setStyleSheet(load_theme(self.config.get("theme", "")))      
         if not self.config.get("chromium_path"):
             print("Chromium path is not set in the configuration.")
 
@@ -109,4 +120,34 @@ class MainWindow(QMainWindow):
     def open_settings_dialog(self):
         dialog = SettingsDialog(self.config_path, self)
         dialog.exec()
-        self.load_config()
+
+
+    def apply_settings_immediately(self):
+        """Aplicar las configuraciones actualizadas de manera inmediata."""
+        # Actualizar los elementos GUI basados en las configuraciones actuales
+        if self.api_input:
+            self.api_input.setText(self.config.get("elsevier_api", ""))
+        if self.insttoken_input:
+            self.insttoken_input.setText(self.config.get("elsevier_insttoken", ""))
+        if self.wos_api_input:
+            self.wos_api_input.setText(self.config.get("wos_api", ""))
+        if self.ieee_api_input:
+            self.ieee_api_input.setText(self.config.get("ieee_api", ""))
+        if self.springer_api_input:
+            self.springer_api_input.setText(self.config.get("springer_api", ""))
+        if self.browser_path_input:
+            self.browser_path_input.setText(self.config.get("chromium_path", ""))
+        if self.results_dir_input:
+            self.results_dir_input.setText(self.config.get("results_dir", ""))
+        self.stealth_checkbox.setChecked(self.config.get("stealth_mode", False))
+        self.scihub_checkbox.setChecked(self.config.get("enable_scihub", True))
+        
+        # Actualizar el tema en tiempo real
+        self.setStyleSheet(load_theme(self.config.get("theme", "Default")))
+
+        # Si hay otros cambios que afecten a otros componentes, actualízalos aquí
+        print("Settings applied immediately.")
+
+
+
+ 
