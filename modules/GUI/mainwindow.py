@@ -7,6 +7,7 @@ from modules.browser.chromium import setup_chromium
 from modules.utils import get_base_dir, load_theme
 from modules.GUI.settingsdialog import SettingsDialog
 from modules.GUI.download_tab import DownloadTab
+from modules.GUI.query_builder_tab import QueryBuilderTab
 from modules.GUI.query_optimizer_tab import QueryOptimizerTab
 from modules.GUI.wordcloud_tab import WordCloudTab
 from modules.GUI.statistics_tab import StatisticsTab
@@ -26,6 +27,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Karon")
         self.base_dir = get_base_dir()
         self.config_path = os.path.join(self.base_dir, 'config.json')
+        self.config = {}
+        self.load_config()
 
         # Crear menú de configuración
         self.create_menu()
@@ -35,6 +38,7 @@ class MainWindow(QMainWindow):
 
         # Añadir pestañas
         self.tabs.addTab(DownloadTab(), "Download Papers")
+        self.tabs.addTab(QueryBuilderTab(self.config), "Query Builder")
         self.tabs.addTab(QueryOptimizerTab(), "Query Optimizer")
         self.tabs.addTab(WordCloudTab(), "WordCloud")  # Crear y añadir pestaña WordCloud
         self.tabs.addTab(StatisticsTab(), "Statistics")  # Crear y añadir pestaña Statistics
@@ -45,9 +49,6 @@ class MainWindow(QMainWindow):
         main_container = QWidget()
         main_container.setLayout(main_layout)
         self.setCentralWidget(main_container)
-
-        # Cargar configuración
-        self.load_config()
 
         # Preguntar si el usuario quiere descargar Ungoogled Chromium
         self.ask_for_chromium()
@@ -72,6 +73,7 @@ class MainWindow(QMainWindow):
                 "enable_scihub": True,
                 "elsevier_api": "",
                 "elsevier_insttoken": "",
+                "wos_api": "",
                 "ieee_api": "",
                 "springer_api": "",
                 "chromium_path": "",

@@ -51,11 +51,15 @@ class SettingsDialog(QDialog):
 
         self.api_input = QLineEdit(self)
         self.api_input.setPlaceholderText("Enter Elsevier API Key")
-        self.api_input.setText(self.config.get("elsevier_api", ""))  # Mostrar la API si existe
+        self.api_input.setText(self.config.get("elsevier_api", ""))
 
         self.insttoken_input = QLineEdit(self)
         self.insttoken_input.setPlaceholderText("Enter Elsevier Insttoken")
         self.insttoken_input.setText(self.config.get("elsevier_insttoken", ""))
+
+        self.wos_api_input = QLineEdit(self)
+        self.wos_api_input.setPlaceholderText("Enter Web of Science API Key")
+        self.wos_api_input.setText(self.config.get("wos_api", ""))
 
         self.ieee_api_input = QLineEdit(self)
         self.ieee_api_input.setPlaceholderText("Enter IEEE API Key")
@@ -67,6 +71,7 @@ class SettingsDialog(QDialog):
 
         api_layout.addRow("Elsevier API:", self.api_input)
         api_layout.addRow("Elsevier Insttoken:", self.insttoken_input)
+        api_layout.addRow("Web of Science API:", self.wos_api_input)
         api_layout.addRow("IEEE API:", self.ieee_api_input)
         api_layout.addRow("Springer API:", self.springer_api_input)
         api_tab.setLayout(api_layout)
@@ -120,6 +125,7 @@ class SettingsDialog(QDialog):
                 "enable_scihub": True,
                 "elsevier_api": "",
                 "elsevier_insttoken": "",
+                "wos_api": "",
                 "ieee_api": "",
                 "springer_api": "",
                 "chromium_path": "",
@@ -147,6 +153,7 @@ class SettingsDialog(QDialog):
         self.config['enable_scihub'] = self.scihub_checkbox.isChecked()
         self.config['elsevier_api'] = self.api_input.text()
         self.config['elsevier_insttoken'] = self.insttoken_input.text()
+        self.config['wos_api'] = self.wos_api_input.text()
         self.config['ieee_api'] = self.ieee_api_input.text()
         self.config['springer_api'] = self.springer_api_input.text()
         self.config['chromium_path'] = self.browser_path_input.text()

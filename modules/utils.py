@@ -1,5 +1,6 @@
 import os
 import sys
+import pandas as pd
 from PySide6.QtWidgets import QApplication
 
 def get_base_dir():
@@ -26,6 +27,33 @@ def load_theme(theme_name):
         with open(theme_path, 'r') as f:
             theme = f.read()
             QApplication.instance().setStyleSheet(theme)
+
+def clean_scopus_data(df):
+        if df.empty:
+            return df
+        # Verificar que las columnas esperadas existan
+        expected_columns = {
+            'dc:title': 'title',
+            'dc:creator': 'author',
+            'prism:publicationName': 'journal',
+            'prism:coverDate': 'year',
+            'prism:doi': 'doi'
+        }
+
+        # Renombrar columnas si están presentes
+        df = df.rename(columns={k: v for k, v in expected_columns.items() if k in df.columns})
+
+        # Seleccionar solo las columnas necesarias
+        df = df[[v for v in expected_columns.values() if v in df.columns]]
+
+        # Limpiar la columna de fechas
+        if 'year' in df.columns:
+            df['year'] = pd.to_datetime(df['year'], errors='coerce').dt.year
+
+        # Eliminar filas con valores nulos en las columnas clave
+        df = df.dropna(subset=['title', 'doi'])
+
+        return df
 
 base_dir = get_base_dir()
 theme_dir = os.path.join(base_dir, 'themes')

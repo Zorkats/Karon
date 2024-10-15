@@ -149,9 +149,11 @@ class DownloadWorker(QThread):
         self.progress_signal.emit(int((index + 1) / total_dois * 100))
 
     def load_dois_from_csv(self, csv_path):
-        """Cargar los DOIs desde un archivo CSV."""
+        """Cargar los DOIs desde un archivo CSV, detectando la columna DOI en cualquier formato de mayúsculas/minúsculas."""
         with open(csv_path, newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             headers = next(reader)
-            doi_index = headers.index("DOI")
+            # Convertir todas las cabeceras a minúsculas para buscar "doi"
+            headers_lower = [header.lower() for header in headers]
+            doi_index = headers_lower.index("doi")
             return [row[doi_index] for row in reader]
