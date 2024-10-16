@@ -30,6 +30,8 @@ class QueryDownloadWorker(QThread):
                     self.result = df  # Guardar el DataFrame limpio
                 else:
                     self.result = pd.DataFrame()  # Asignar un DataFrame vacío si falla
+            
+            self.progress_signal.emit(100)
 
         except Exception as e:
             self.log_signal.emit(f"Error: {e}")

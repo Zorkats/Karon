@@ -1,4 +1,6 @@
 import os
+import re
+from itertools import combinations
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QComboBox, QTextEdit, QFileDialog, QHBoxLayout, QProgressBar
 from PySide6.QtCore import QThread
 from modules.download.query_builder import QueryDownloadWorker
@@ -59,9 +61,6 @@ class QueryBuilderTab(QWidget):
         self.custom_query_input.textChanged.connect(self.toggle_download_button)
         self.download_button.clicked.connect(self.download_data)
         
-
-        
-
     def generate_query(self):
         keywords = [kw.strip() for kw in self.keyword_input.text().split(',') if kw.strip()]
         title = self.title_input.text().strip()
@@ -69,26 +68,60 @@ class QueryBuilderTab(QWidget):
         date_range = self.date_range_input.text().strip()
         language = self.language_input.text().strip()
         doctype = self.doctype_input.text().strip()
-
         query_parts = []
+
+        # Procesar palabras clave
         if keywords:
-            query_parts.append(f"TITLE-ABS-KEY({' OR '.join(keywords)})")
+            keyword_groups = []
+            current_group = []
+            for keyword in keywords:
+                terms = keyword.split()
+                if len(current_group) + len(terms) > 3 or len(current_group) + len(keyword_groups) >= 3:
+                    if current_group:
+                        keyword_groups.append(' OR '.join(current_group))
+                        current_group = []
+                current_group.append(' AND '.join(terms))
+            
+            if current_group:
+                keyword_groups.append(' OR '.join(current_group))
+            
+            # Limitar a un máximo de tres grupos TITLE-ABS-KEY
+            for i, group in enumerate(keyword_groups[:3]):
+                query_parts.append(f"TITLE-ABS-KEY ( {group} )")
+            
+            # Si hay más de tres grupos, combinar los restantes en uno solo
+            if len(keyword_groups) > 3:
+                remaining = ' OR '.join(keyword_groups[3:])
+                query_parts.append(f"TITLE-ABS-KEY ( {remaining} )")
+
+        # Añadir otros términos a la query
         if title:
-            query_parts.append(f"TITLE({title})")
+            query_parts.append(f"TITLE-ABS-KEY ( {title} )")
         if author:
-            query_parts.append(f"AUTHOR({author})")
+            query_parts.append(f"AUTHOR ( {author} )")
         if date_range:
             years = date_range.split('-')
             if len(years) == 2:
                 query_parts.append(f"PUBYEAR > {years[0]} AND PUBYEAR < {years[1]}")
         if language:
-            query_parts.append(f"LIMIT-TO(LANGUAGE, \"{language}\")")
+            query_parts.append(f"( LIMIT-TO ( LANGUAGE , \"{language}\" ) )")
         if doctype:
-            query_parts.append(f"LIMIT-TO(DOCTYPE, \"{doctype}\")")
+            query_parts.append(f"( LIMIT-TO ( DOCTYPE , \"{doctype}\" ) )")
 
+        # Unir las partes de la query con "AND"
         query = ' AND '.join(query_parts)
+
+        # Asegurarse de que haya espacios adecuados alrededor de los paréntesis
+        query = query.replace('(', ' ( ').replace(')', ' ) ')
+
+        # Limpiar cualquier doble espacio
+        query = ' '.join(query.split())
+
+        # Mostrar la query en la salida de texto
         self.query_output.setPlainText(query)
         self.download_button.setEnabled(True)
+        return query
+
 
 
     def download_data(self):

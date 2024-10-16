@@ -1,7 +1,7 @@
 import os
 import json
 from PySide6.QtCore import Signal, QThread
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QTabWidget, QWidget, QMenu, QMenuBar, QMessageBox, QCheckBox,QDialog
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QTabWidget, QWidget, QMenu, QMenuBar, QMessageBox, QCheckBox,QDialog, QPushButton, QFileDialog, QHBoxLayout
 from PySide6.QtGui import QAction, QPixmap, QIcon
 from modules.browser.chromium import setup_chromium
 from modules.utils import get_base_dir, load_theme
@@ -54,9 +54,18 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(WordCloudTab(), "WordCloud")  # Crear y añadir pestaña WordCloud
         self.tabs.addTab(StatisticsTab(), "Statistics")  # Crear y añadir pestaña Statistics
 
+        self.exit_button = QPushButton("Exit", self)
+        self.exit_button.clicked.connect(self.close)
+
+
         # Configurar layout principal con pestañas
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.tabs)
+        exit_layout = QHBoxLayout()
+        exit_layout.addStretch()  # Esto empuja el botón hacia la derecha
+        exit_layout.addWidget(self.exit_button)
+        main_layout.addLayout(exit_layout)
+        
         main_container = QWidget()
         main_container.setLayout(main_layout)
         self.setCentralWidget(main_container)
@@ -75,7 +84,7 @@ class MainWindow(QMainWindow):
         settings_action = QAction("Open Settings", self)
         settings_action.triggered.connect(self.open_settings_dialog)
         settingsMenu.addAction(settings_action)
-
+        
     def load_config(self):
         """Cargar configuraciones desde config.json."""
         if not os.path.exists(self.config_path):
