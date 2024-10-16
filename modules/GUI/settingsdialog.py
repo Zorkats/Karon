@@ -1,18 +1,61 @@
 import os
 import json
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, QObject
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLineEdit, QTabWidget, QWidget, QFormLayout, QCheckBox, QFileDialog, QComboBox
 from modules.utils import get_base_dir, load_theme, get_available_themes
 
+class SettingsManager(QObject):
+    settings_changed = Signal(dict)
+
+    def __init__(self, config_path):
+        super().__init__()
+        self.config_path = config_path
+        self.config = self.load_config()
+
+    def load_config(self):
+        if not os.path.exists(self.config_path):
+            config = {
+                "stealth_mode": False,
+                "enable_scihub": True,
+                "elsevier_api": "",
+                "elsevier_insttoken": "",
+                "wos_api": "",
+                "ieee_api": "",
+                "springer_api": "",
+                "chromium_path": "",
+                "results_dir": "",
+                "theme": "Default"
+            }
+            self.save_config(config)
+        else:
+            with open(self.config_path, 'r') as f:
+                config = json.load(f)
+        return config
+
+    def save_config(self, config):
+        with open(self.config_path, 'w') as f:
+            json.dump(config, f)
+        self.config = config
+        self.settings_changed.emit(config)
+
+    def get_setting(self, key):
+        return self.config.get(key)
+
+    def update_setting(self, key, value):
+        self.config[key] = value
+        self.save_config(self.config)
+
+
 class SettingsDialog(QDialog):
     settings_changed = Signal()
-    def __init__(self, config_path, parent=None):
+    def __init__(self, settings_manager, parent=None):
         super().__init__(parent)
-        self.base_dir = get_base_dir()
-        self.config_path = os.path.join(self.base_dir, 'config.json')
+        self.settings_manager = settings_manager
         self.setWindowTitle("Settings")
         self.setMinimumSize(400, 300)
 
+        base_dir = get_base_dir()
+        self.config_path = os.path.join(base_dir, "config.json")
         self.config = {}
         self.load_config()
 
@@ -141,6 +184,7 @@ class SettingsDialog(QDialog):
                 self.config = json.load(f)
 
         self.setStyleSheet(load_theme(self.config.get("theme", "")))
+        return self.config
 
     
     def apply_loaded_config(self):
@@ -150,22 +194,20 @@ class SettingsDialog(QDialog):
         self.browser_path_input.setText(self.config.get("chromium_path", ""))
 
     def save_config(self):
-        """Guardar las configuraciones en config.json."""
-        self.config['stealth_mode'] = self.stealth_checkbox.isChecked()
-        self.config['enable_scihub'] = self.scihub_checkbox.isChecked()
-        self.config['elsevier_api'] = self.api_input.text()
-        self.config['elsevier_insttoken'] = self.insttoken_input.text()
-        self.config['wos_api'] = self.wos_api_input.text()
-        self.config['ieee_api'] = self.ieee_api_input.text()
-        self.config['springer_api'] = self.springer_api_input.text()
-        self.config['chromium_path'] = self.browser_path_input.text()
-        self.config['results_dir'] = self.results_dir_input.text()
-        self.config['theme'] = self.theme_selector.currentText()
+        # Update the config dictionary
+        config = self.settings_manager.config
+        config['stealth_mode'] = self.stealth_checkbox.isChecked()
+        config['enable_scihub'] = self.scihub_checkbox.isChecked()
+        config['elsevier_api'] = self.api_input.text()
+        config['elsevier_insttoken'] = self.insttoken_input.text()
+        config['wos_api'] = self.wos_api_input.text()
+        config['ieee_api'] = self.ieee_api_input.text()
+        config['springer_api'] = self.springer_api_input.text()
+        config['chromium_path'] = self.browser_path_input.text()
+        config['results_dir'] = self.results_dir_input.text()
+        config['theme'] = self.theme_selector.currentText()
 
-        with open(self.config_path, 'w') as f:
-            json.dump(self.config, f)
-
+        # Save the updated config
         load_theme(self.theme_selector.currentText())
-
-        self.settings_changed.emit()
-        self.accept()  # Cerrar el diálogo al guardar
+        self.settings_manager.save_config(config)
+        self.accept()

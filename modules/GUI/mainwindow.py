@@ -1,11 +1,11 @@
 import os
 import json
 from PySide6.QtCore import Signal, QThread
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QTabWidget, QWidget, QMenu, QMenuBar, QMessageBox, QCheckBox
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QTabWidget, QWidget, QMenu, QMenuBar, QMessageBox, QCheckBox,QDialog
 from PySide6.QtGui import QAction, QPixmap, QIcon
 from modules.browser.chromium import setup_chromium
 from modules.utils import get_base_dir, load_theme
-from modules.GUI.settingsdialog import SettingsDialog
+from modules.GUI.settingsdialog import SettingsDialog, SettingsManager
 from modules.GUI.download_tab import DownloadTab
 from modules.GUI.query_builder_tab import QueryBuilderTab
 from modules.GUI.query_optimizer_tab import QueryOptimizerTab
@@ -27,7 +27,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Karon")
         self.base_dir = get_base_dir()
         self.config_path = os.path.join(self.base_dir, 'config.json')
-        self.config = {}
+        self.settings_manager = SettingsManager(self.config_path)
+        self.settings_manager.settings_changed.connect(self.apply_settings)
         self.api_input = None  # Inicializar como None en lugar de string vacío
         self.insttoken_input = None
         self.wos_api_input = None
@@ -42,16 +43,14 @@ class MainWindow(QMainWindow):
 
         # Crear menú de configuración
         self.create_menu()
-        self.settings_dialog = SettingsDialog(self.config_path, self)
-        self.settings_dialog.settings_changed.connect(self.apply_settings_immediately)
 
         # Crear QTabWidget para las pestañas
         self.tabs = QTabWidget()
 
         # Añadir pestañas
-        self.tabs.addTab(DownloadTab(), "Download Papers")
-        self.tabs.addTab(QueryBuilderTab(self.config), "Query Builder")
-        self.tabs.addTab(QueryOptimizerTab(), "Query Optimizer")
+        self.tabs.addTab(DownloadTab(self.settings_manager), "Download Papers")
+        self.tabs.addTab(QueryBuilderTab(self.settings_manager), "Query Builder")
+        self.tabs.addTab(QueryOptimizerTab(self.settings_manager), "Query Optimizer")
         self.tabs.addTab(WordCloudTab(), "WordCloud")  # Crear y añadir pestaña WordCloud
         self.tabs.addTab(StatisticsTab(), "Statistics")  # Crear y añadir pestaña Statistics
 
@@ -118,13 +117,12 @@ class MainWindow(QMainWindow):
             print("Ungoogled Chromium is already installed!")
 
     def open_settings_dialog(self):
-        dialog = SettingsDialog(self.config_path, self)
+        dialog = SettingsDialog(self.settings_manager, self)
         dialog.exec()
 
 
-    def apply_settings_immediately(self):
-        """Aplicar las configuraciones actualizadas de manera inmediata."""
-        # Actualizar los elementos GUI basados en las configuraciones actuales
+    def apply_settings(self, config):
+        self.config = config
         if self.api_input:
             self.api_input.setText(self.config.get("elsevier_api", ""))
         if self.insttoken_input:
@@ -144,9 +142,10 @@ class MainWindow(QMainWindow):
         
         # Actualizar el tema en tiempo real
         self.setStyleSheet(load_theme(self.config.get("theme", "Default")))
-
-        # Si hay otros cambios que afecten a otros componentes, actualízalos aquí
-        print("Settings applied immediately.")
+        for i in range(self.tabs.count()):
+            tab = self.tabs.widget(i)
+            if hasattr(tab, 'update_settings'):
+                tab.update_settings(config)
 
 
 

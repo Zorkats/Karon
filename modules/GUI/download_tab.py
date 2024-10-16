@@ -4,11 +4,9 @@ import os
 from modules.utils import get_base_dir
 
 class DownloadTab(QWidget):
-    def __init__(self):
+    def __init__(self, settings_manager):
         super().__init__()
-        self.base_dir = get_base_dir()
-        self.config_path = os.path.join(self.base_dir, 'config.json')
-        self.config = {}
+        self.settings_manager = settings_manager
 
         # Configurar widgets para Download Papers
         self.csvPathLine = QLineEdit(self)
@@ -52,8 +50,19 @@ class DownloadTab(QWidget):
 
         self.logArea.append("Starting downloads...")
 
+        config = {
+            'elsevier_api': self.settings_manager.get_setting('elsevier_api'),
+            'elsevier_insttoken': self.settings_manager.get_setting('elsevier_insttoken'),
+            'wos_api': self.settings_manager.get_setting('wos_api'),
+            'ieee_api': self.settings_manager.get_setting('ieee_api'),
+            'springer_api': self.settings_manager.get_setting('springer_api'),
+            'chromium_path': self.settings_manager.get_setting('chromium_path'),
+            'stealth_mode': self.settings_manager.get_setting('stealth_mode'),
+            'enable_scihub': self.settings_manager.get_setting('enable_scihub')
+        }   
+
         # Iniciar el proceso de descarga con DownloadWorker
-        self.worker = DownloadWorker(csv_path, self.config)
+        self.worker = DownloadWorker(csv_path, config)
         self.worker.log_signal.connect(self.update_log)
         self.worker.progress_signal.connect(self.update_progress)
         self.worker.start()

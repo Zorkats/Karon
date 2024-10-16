@@ -7,11 +7,12 @@ from modules.browser.stealth import apply_stealth
 from modules.download.pdf_downloader import download_pdf_via_api, download_and_save_pdf_stream
 from modules.download.pdf_searcher import search_with_advanced_selectors, search_with_general_method
 from modules.download.scihub_downloader import download_from_scihub
-from modules.utils import get_base_dir, get_download_path
+from modules.utils import get_download_path
 
 class DownloadWorker(QThread):
     log_signal = Signal(str)
     progress_signal = Signal(int)
+    finished_signal = Signal()
 
     def __init__(self, csv_path, config):
         super().__init__()
@@ -23,27 +24,33 @@ class DownloadWorker(QThread):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.process_downloads())
+        self.finished_signal.emit()  # Asegurar que el hilo termina correctamente
 
     async def process_downloads(self):
         """Función principal para manejar las descargas secuenciales."""
-        dois = self.load_dois_from_csv(self.csv_path)
-        total_dois = len(dois)
-        self.log_signal.emit(f"{total_dois} DOIs found for download.")
-    
-        self.log_signal.emit("Iniciando navegador...")
-        browser_manager = BrowserManager(executable_path=os.path.join(self.config.get('chromium_path')), headless=True)
-        await browser_manager.start_browser()
-        self.log_signal.emit("Navegador iniciado.")
+        try:
+            dois = self.load_dois_from_csv(self.csv_path)
+            total_dois = len(dois)
+            self.log_signal.emit(f"{total_dois} DOIs found for download.")
+        
+            self.log_signal.emit("Iniciando navegador...")
+            browser_manager = BrowserManager(executable_path=os.path.join(self.config.get('chromium_path')), headless=True)
+            await browser_manager.start_browser()
+            self.log_signal.emit("Navegador iniciado.")
 
-        # Procesar cada DOI uno por uno secuencialmente
-        for index, doi in enumerate(dois):
-            progress = int((index + 1) / total_dois * 100)
-            self.progress_signal.emit(progress)
-            await self.download_single_doi(doi, index, total_dois, browser_manager)
-            
-        await browser_manager.close_browser()
-        self.log_signal.emit("Descargas completadas.")
-        self.progress_signal.emit(100)
+            for index, doi in enumerate(dois):
+                progress = int((index + 1) / total_dois * 100)
+                self.progress_signal.emit(progress)
+                await self.download_single_doi(doi, index, total_dois, browser_manager)
+                
+            await browser_manager.close_browser()
+            self.log_signal.emit("Descargas completadas.")
+            self.progress_signal.emit(100)
+
+        except Exception as e:
+            self.log_signal.emit(f"Error durante el proceso de descargas: {e}")
+        finally:
+            self.finished_signal.emit()  # Asegurar que el hilo finaliza en todos los casos
 
     async def download_single_doi(self, doi, index, total_dois, browser_manager):
         self.log_signal.emit(f"Processing DOI: {doi}")
@@ -58,7 +65,7 @@ class DownloadWorker(QThread):
                 pdf_content = download_pdf_via_api(doi, api_key, elsevier_insttoken)
                 if pdf_content:
                     self.save_pdf(doi, pdf_content, index, total_dois)
-                    return  # Si el PDF es válido, terminar la tarea
+                    return
 
         # Intentar descargar con Springer
         elif doi.startswith("10.1007"):
@@ -68,7 +75,7 @@ class DownloadWorker(QThread):
                 pdf_content = download_pdf_via_api(doi, api_key)
                 if pdf_content:
                     self.save_pdf(doi, pdf_content, index, total_dois)
-                    return  # Si el PDF es válido, terminar la tarea
+                    return
 
         # Intentar descargar con IEEE
         elif doi.startswith("10.1109"):
@@ -78,9 +85,8 @@ class DownloadWorker(QThread):
                 pdf_content = download_pdf_via_api(doi, api_key)
                 if pdf_content:
                     self.save_pdf(doi, pdf_content, index, total_dois)
-                    return  # Si el PDF es válido, terminar la tarea
+                    return
 
-        # Si no se usó ninguna API, intentar con navegación web
         apply_stealth_mode = self.config.get("stealth_mode", False)
         page = await browser_manager.new_page()
         if apply_stealth_mode:
@@ -138,7 +144,6 @@ class DownloadWorker(QThread):
             self.log_signal.emit(f"SciHub downloads are disabled.")
 
         await page.close()
-
 
     def save_pdf(self, doi, pdf_content, index, total_dois):
         """Guardar el PDF descargado."""

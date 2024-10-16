@@ -9,57 +9,65 @@ from io import BytesIO
 class WordCloudWorker(QThread):
     wordcloud_generated = Signal(QPixmap)
     log_signal = Signal(str)
+    finished = Signal()
 
     def __init__(self, folder_path):
         super().__init__()
         self.folder_path = folder_path
 
     def run(self):
-        self.log_signal.emit("Starting WordCloud generation...")
+        try:
+            self.log_signal.emit("Starting WordCloud generation...")
 
-        pdf_files = [f for f in os.listdir(self.folder_path) if f.endswith('.pdf')]
-        text_content = ""
-        total_files = len(pdf_files)
+            pdf_files = [f for f in os.listdir(self.folder_path) if f.endswith('.pdf')]
+            text_content = ""
+            total_files = len(pdf_files)
 
-        if total_files == 0:
-            self.log_signal.emit("No PDF files found in the selected folder.")
-            return
+            if total_files == 0:
+                self.log_signal.emit("No PDF files found in the selected folder.")
+                return
 
-        self.log_signal.emit(f"Found {total_files} PDF files. Extracting text...")
+            self.log_signal.emit(f"Found {total_files} PDF files. Extracting text...")
 
-        for index, pdf_file in enumerate(pdf_files):
-            try:
-                pdf_path = os.path.join(self.folder_path, pdf_file)
-                self.log_signal.emit(f"Processing {pdf_file} ({index + 1}/{total_files})...")
-                with open(pdf_path, 'rb') as f:
-                    reader = PdfReader(f)
-                    for page_num, page in enumerate(reader.pages):
-                        text = page.extract_text()
-                        if text:
-                            text_content += text
-                            self.log_signal.emit(f"Extracted text from page {page_num + 1} of {pdf_file}")
-                        else:
-                            self.log_signal.emit(f"Warning: Page {page_num + 1} of {pdf_file} is empty.")
-            except Exception as e:
-                self.log_signal.emit(f"Failed to process {pdf_file}: {e}")
+            for index, pdf_file in enumerate(pdf_files):
+                try:
+                    pdf_path = os.path.join(self.folder_path, pdf_file)
+                    self.log_signal.emit(f"Processing {pdf_file} ({index + 1}/{total_files})...")
+                    with open(pdf_path, 'rb') as f:
+                        reader = PdfReader(f)
+                        for page_num, page in enumerate(reader.pages):
+                            text = page.extract_text()
+                            if text:
+                                text_content += text
+                                self.log_signal.emit(f"Extracted text from page {page_num + 1} of {pdf_file}")
+                            else:
+                                self.log_signal.emit(f"Warning: Page {page_num + 1} of {pdf_file} is empty.")
+                except Exception as e:
+                    self.log_signal.emit(f"Failed to process {pdf_file}: {e}")
 
-        if not text_content:
-            self.log_signal.emit("No valid text extracted from the PDFs.")
-            return
+            if not text_content:
+                self.log_signal.emit("No valid text extracted from the PDFs.")
+                return
 
-        self.log_signal.emit("Generating WordCloud...")
-        wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text_content)
+            self.log_signal.emit("Generating WordCloud...")
+            wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text_content)
 
-        image_buffer = BytesIO()
-        wordcloud.to_image().save(image_buffer, format='PNG')
-        image_data = image_buffer.getvalue()
+            image_buffer = BytesIO()
+            wordcloud.to_image().save(image_buffer, format='PNG')
+            image_data = image_buffer.getvalue()
 
-        pixmap = QPixmap()
-        if pixmap.loadFromData(image_data):
-            self.wordcloud_generated.emit(pixmap)
-            self.log_signal.emit("WordCloud generation completed.")
-        else:
-            self.log_signal.emit("Failed to generate WordCloud image.")
+            pixmap = QPixmap()
+            if pixmap.loadFromData(image_data):
+                self.wordcloud_generated.emit(pixmap)
+                self.log_signal.emit("WordCloud generation completed.")
+            else:
+                self.log_signal.emit("Failed to generate WordCloud image.")
+        except Exception as e:
+            self.log_signal.emit(f"Error: {e}")
+        finally:
+            self.quit()  # Asegurar que el hilo termine siempre
+            self.finished.emit()
+
 
 class WordCloudTab(QWidget):
     def __init__(self):

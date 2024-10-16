@@ -1,12 +1,13 @@
-import pandas as pd
+import os
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QComboBox, QTextEdit, QFileDialog, QHBoxLayout, QProgressBar
 from PySide6.QtCore import QThread
 from modules.download.query_builder import QueryDownloadWorker
+from modules.utils import get_base_dir
 
 class QueryBuilderTab(QWidget):
-    def __init__(self, config):
+    def __init__(self, settings_manager):
         super().__init__()
-        self.config = config
+        self.settings_manager = settings_manager
 
         # Widgets for creating queries
         self.custom_query_input = QTextEdit(self)
@@ -98,9 +99,9 @@ class QueryBuilderTab(QWidget):
             query = self.generate_query()
         
         api_type = self.api_selection.currentText()
-        scopus_api_key = self.config.get('elsevier_api')
-        insttoken = self.config.get('elsevier_insttoken') if api_type == "Scopus" else None
-        api_key = self.config.get('wos_api') if api_type == "Web of Science" else scopus_api_key
+        scopus_api_key = self.settings_manager.get_setting('elsevier_api')
+        insttoken = self.settings_manager.get_setting('elsevier_insttoken') if api_type == "Scopus" else None
+        api_key = self.settings_manager.get_setting('wos_api') if api_type == "Web of Science" else scopus_api_key
 
         self.worker = QueryDownloadWorker(query, api_key, insttoken, api_type)
         self.worker.progress_signal.connect(self.update_progress)

@@ -2,8 +2,9 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QFil
 from modules.download.query_optimizer import combine_queries, clean_data, filter_by_keyword, save_data
 
 class QueryOptimizerTab(QWidget):
-    def __init__(self):
+    def __init__(self,settings_manager):
         super().__init__()
+        self.settings_manager = settings_manager
 
         # Configurar widgets
         self.scopus_path_input = QLineEdit(self)
