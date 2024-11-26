@@ -58,9 +58,13 @@ Contributions are welcome! If you have ideas, suggestions, feature requests or e
 
 # TODO
 -Implement multi-language support.
+
 -Add more identifiers beside DOIs. (Like PMID)
+
 -Implement the Statistics Tab on it's full capacity, including a Deep Learning model to resume the papers you downloaded.
+
 -Implement an executable file for people that does not want to install Python and the dependencies.
+
 -More to come!
 
 
