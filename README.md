@@ -12,7 +12,9 @@ Karon is a tool designed for **researchers** to streamline their workflow when m
 - **Query Builder**: Create Queries for Scopus and Web of Science based on information you have like the Authors, Keywords, Date Range, and more. You can then download the data and you will have a .csv file with the DOIs already built!
 - **Query Optimizer**: Grab two .csv files from Scopus and Web of Science, and fuse them so you won't download the same paper two times, or papers that you don't need.
 - **User-Friendly Interface**: Designed for researchers of all expertise levels, alongside Themes to make it easier on the eyes.
-- **API Support**: If you have an API for one of the paper publishers, you can use that to download your paper without any problems! Currently, the supported APIs are:
+- **API Support**: If you have an API for one of the paper publishers, you can use that to download your paper without any problems!
+
+  Currently, the supported APIs are:
 - Elsevier (along with it's Institutional Token, in case you have one)
 - Web of Science
 - IEEE
