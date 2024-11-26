@@ -85,7 +85,7 @@ Karon is licensed under the **GNU General Public License version 3**. See the `L
 
 Have questions or suggestions? Feel free to reach out:
 
-- **Email**: [email@example.com](vicentemediano1@gmail.com)
+- **Email**: [vicentemediano1@gmail.com](vicentemediano1@gmail.com)
 - **GitHub Issues**: [Open an Issue](https://github.com/Zorkats/karon/issues)
 
 
