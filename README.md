@@ -1,7 +1,5 @@
 # Karon: Research Assistant Tool
 
-![Karon Logo](karon_logo.png)
-
 # 📖 Introduction
 
 Karon is a tool designed for **researchers** to streamline their workflow when managing and organizing academic papers. It provides an intuitive and powerful interface to automate tasks like downloading papers, making queries for Scopus and Web of Science, among other features.
