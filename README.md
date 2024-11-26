@@ -79,7 +79,7 @@ Contributions are welcome! If you have ideas, suggestions, feature requests or e
 
 # 🛡️ License
 
-Karon is licensed under the **MIT License**. See the `LICENSE` file for more details.
+Karon is licensed under the **GNU General Public License version 3**. See the `LICENSE` file for more details.
 
 # 📫 Contact
 
