@@ -41,7 +41,7 @@ If you have an API you would like me to implement, leave an issue and I will wor
    ```bash
    python main.py
 
-### 🚀 How to Use
+# 🚀 How to Use
 
 1. Open Karon by running `main.py`..
 2. Use the tabs to access the available tools:
@@ -56,7 +56,7 @@ If you have an API you would like me to implement, leave an issue and I will wor
 
 Contributions are welcome! If you have ideas, suggestions, feature requests or encounter an issue, please feel free to leave an issue, I swear I will look at it eventually.
 
-### TODO
+# TODO
 -Implement multi-language support.
 -Add more identifiers beside DOIs. (Like PMID)
 -Implement the Statistics Tab on it's full capacity, including a Deep Learning model to resume the papers you downloaded.
@@ -64,13 +64,16 @@ Contributions are welcome! If you have ideas, suggestions, feature requests or e
 -More to come!
 
 
-### 🌟FAQ
+# 🌟FAQ
  **¿Why did you make this program?**
+ 
  This program was born after I was tasked on an investigation on my university to make a webscrapper to download multiple papers, for the purpose of doing an SLR. The thing that I noticed, is that a lot of tools and webscrappers were either outdated, behind a paywall, or they simply didn't work. So after I made the initial version for the investigation, I kept working on it to make it a fully made program with GUI and features, so people would find it and use it without having a lot of problems.
+ 
  **¿Why the name Karon?**
+ 
  This is funny because, while I was developing this, I was playing ASTLIBRA Revision, a very good JRPG which has probably became one of my favorite games ever made. I would spent a whole hour writing about it, but the thing is one of the protagonists (which is a talking crow, hence the logo) is named Karon. And considering Sci-hub's logo is also a crow, I thought it was fitting.
 
-### 🛡️ License
+# 🛡️ License
 
 Karon is licensed under the **MIT License**. See the `LICENSE` file for more details.
 
