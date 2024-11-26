@@ -56,7 +56,7 @@ If you have an API you would like me to implement, leave an issue and I will wor
 
 Contributions are welcome! If you have ideas, suggestions, feature requests or encounter an issue, please feel free to leave an issue, I swear I will look at it eventually.
 
-# TODO
+# 🔧 TODO
 -Implement multi-language support.
 
 -Add more identifiers beside DOIs. (Like PMID)
