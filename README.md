@@ -27,7 +27,16 @@ If you have an API you would like me to implement, leave an issue and I will wor
    git clone https://github.com/your_user/karon.git
    cd karon
 
-2. **Install the dependencies**:
+2. **Install the dependencies**:[requirements.txt](https://github.com/user-attachments/files/17925026/requirements.txt)PySide6>=6.8.0
+playwright>=1.47.0
+beautifulsoup4>=4.12.3
+requests>=2.32.3
+PyPDF2>=3.0.1
+pandas>=2.2.2
+matplotlib>=3.9.0
+wordcloud>=1.9.3
+
+
    ```bash
    pip install -r requirements.txt
 
