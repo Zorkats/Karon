@@ -4,19 +4,20 @@
 
 # 📖 Introduction
 
-Karon is a tool designed for **researchers** to streamline their workflow when managing and organizing academic papers. It provides an intuitive and powerful interface to automate tasks like downloading papers and handling academic quotes.
+Karon is a tool designed for **researchers** to streamline their workflow when managing and organizing academic papers. It provides an intuitive and powerful interface to automate tasks like downloading papers, making queries for Scopus and Web of Science, among other features.
 
 # ✨ Features
 
 - **Automated Downloading**: Fetch academic papers directly from platforms like ScienceDirect, Nature, MDPI, Springer, among others. (This program can also fetch from Sci-hub, but it's an optional feature.)
 - **Query Builder**: Create Queries for Scopus and Web of Science based on information you have like the Authors, Keywords, Date Range, and more. You can then download the data and you will have a .csv file with the DOIs already built!
 - **Query Optimizer**: Grab two .csv files from Scopus and Web of Science, and fuse them so you won't download the same paper two times, or papers that you don't need.
-- **User-Friendly Interface**: Designed for researchers of all expertise levels.
+- **User-Friendly Interface**: Designed for researchers of all expertise levels, alongside Themes to make it easier on the eyes.
 - **API Support**: If you have an API for one of the paper publishers, you can use that to download your paper without any problems! Currently, the supported APIs are:
 - Elsevier (along with it's Institutional Token, in case you have one)
 - Web of Science
 - IEEE
 - Springer
+
 If you have an API you would like me to implement, leave an issue and I will work on it!
 
 # 🛠️ How to Install
