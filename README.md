@@ -27,7 +27,7 @@ If you have an API you would like me to implement, leave an issue and I will wor
    git clone https://github.com/your_user/karon.git
    cd karon
 
-2. **Install the dependencies**:[requirements.txt](https://github.com/user-attachments/files/17925026/requirements.txt)
+2. **Install the dependencies**: [requirements.txt](https://github.com/user-attachments/files/17925026/requirements.txt)
    ```bash
    pip install -r requirements.txt
 
