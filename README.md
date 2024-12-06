@@ -75,18 +75,19 @@ Contributions are welcome! If you have ideas, suggestions, feature requests or e
  
  **¿Why the name Karon?**
  
- This is funny because, while I was developing this, I was playing ASTLIBRA Revision, a very good JRPG which has probably became one of my favorite games ever made. I would spent a whole hour writing about it, but the thing is one of the protagonists (which is a talking crow, hence the logo) is named Karon. And considering Sci-hub's logo is also a crow, I thought it was fitting.
+ This is funny because, while I was developing this, I was playing ASTLIBRA Revision, a very good JRPG which has probably become one of my favorite games ever made. I could spent a whole hour writing about it, but the thing is one of the protagonists (which is a talking crow, hence the logo) is named Karon. And considering Sci-hub's logo is also a crow, I thought it was fitting.
 
 # 🛡️ License
 
 Karon is licensed under the **GNU General Public License version 3**. See the `LICENSE` file for more details.
 
-# 📫 Contact
+# 📫 Contact and Donations
 
-Have questions or suggestions? Feel free to reach out:
+If you have a question or you want to make a donation (I would really really really love you) feel free to message me and leave a donation through the Sponsor button or the Paypal link below.
 
 - **Email**: [vicentemediano1@gmail.com](vicentemediano1@gmail.com)
 - **GitHub Issues**: [Open an Issue](https://github.com/Zorkats/karon/issues)
+- **Donate through PayPal**: [Here](https://www.paypal.com/donate/?hosted_button_id=C8JD8HGFTEJB2)
 
 
 
