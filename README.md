@@ -51,6 +51,16 @@ If you have an API you would like me to implement, leave an issue and I will wor
    - **WordCloud**
    - **Statistics**
 
+# 🖥️ Command-Line Usage
+
+Karon can also be used via the command line without the GUI. The following options are supported when running python main.py:
+--help: Show available command-line options and usage.
+--version: Print the current version of Karon and exit.
+--download <DOI>: Download the paper for the given DOI and save it to the downloads folder (without launching the GUI).
+--gui: Force launch the GUI (this is the default behavior if no flag is provided).
+
+When using CLI download, Karon will ensure the required browser is installed and then download the PDF for the specified DOI using available APIs or web scraping (and Sci-Hub as a fallback if enabled in the config). A config.json file is automatically created on first run with default settings (API keys, preferences, etc.), and all actions are logged to logs/karon.log.
+
 
 # 👨‍💻 Contributions
 
@@ -75,7 +85,7 @@ Contributions are welcome! If you have ideas, suggestions, feature requests or e
  
  **¿Why the name Karon?**
  
- This is funny because, while I was developing this, I was playing ASTLIBRA Revision, a very good JRPG which has probably become one of my favorite games ever made. I could spent a whole hour writing about it, but the thing is one of the protagonists (which is a talking crow, hence the logo) is named Karon. And considering Sci-hub's logo is also a crow, I thought it was fitting.
+ This is funny because, while I was developing this, I was playing ASTLIBRA Revision, a very good JRPG which has probably become one of my favorite games ever made. I could spent a whole hour writing about it, but the thing is one of the protagonists (which is a talking crow, hence the logo) is named Karon. Given that Sci-Hub's logo is also a crow, the name felt fitting for a research assistant tool!
 
 # 🛡️ License
 
