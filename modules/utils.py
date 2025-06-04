@@ -26,7 +26,11 @@ def load_theme(theme_name):
     if os.path.exists(theme_path):
         with open(theme_path, 'r') as f:
             theme = f.read()
+        # Aplicar el tema al QApplication activo si existe
+        if QApplication.instance():
             QApplication.instance().setStyleSheet(theme)
+        return theme
+    return ""
 
 def clean_scopus_data(df):
         if df.empty:
