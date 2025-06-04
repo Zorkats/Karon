@@ -81,7 +81,7 @@ Contributions are welcome! If you have ideas, suggestions, feature requests or e
 # 🌟FAQ
  **¿Why did you make this program?**
  
- This program was born after I was tasked on an investigation on my university to make a webscrapper to download multiple papers, for the purpose of doing an SLR. The thing that I noticed, is that a lot of tools and webscrappers were either outdated, behind a paywall, or they simply didn't work. So after I made the initial version for the investigation, I kept working on it to make it a fully made program with GUI and features, so people would find it and use it without having a lot of problems.
+ This program was born after I was tasked on an investigation on my university to make a web scraper to download multiple papers, for the purpose of doing an SLR. The thing that I noticed, is that a lot of tools and webscrappers were either outdated, behind a paywall, or they simply didn't work. So after I made the initial version for the investigation, I kept working on it to make it a fully made program with GUI and features, so people would find it and use it without having a lot of problems.
  
  **¿Why the name Karon?**
  
