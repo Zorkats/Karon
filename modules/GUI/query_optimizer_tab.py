@@ -55,10 +55,14 @@ class QueryOptimizerTab(QWidget):
         df_combined = combine_queries(scopus_path, wos_path if wos_path else None)
         df_cleaned = clean_data(df_combined)
 
+        # Inicializar df_filtered con el dataframe limpiado
+        df_filtered = df_cleaned
+
+        # Si se proporciona un keyword, filtrar
         if keyword:
             df_filtered = filter_by_keyword(df_cleaned, keyword)
 
-        # Guardar y generar resultados
+        # Guardar y generar resultados asegurando que se pase un DataFrame válido
         save_data(df_filtered, "filtered_results.csv")
 
         self.update_log("Query Optimizer completed.")
